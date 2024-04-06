@@ -1,14 +1,15 @@
 use serde::de::{self, Visitor};
 use serde::{Deserialize, Deserializer};
 use std::collections::HashMap;
-use std::fmt;
+use std::{default, fmt};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub enum CommandContext {
     Run,
     Test,
     Build,
     Bench,
+    #[default]
     Script,
 }
 
@@ -45,24 +46,26 @@ impl<'de> Deserialize<'de> for CommandContext {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub enum CommandType {
     Cargo,
+    #[default]
     Shell,
-    Script,
 }
 
+// Implement Deserialize manually to include default behavior
 impl<'de> Deserialize<'de> for CommandType {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        let s: String = Deserialize::deserialize(deserializer)?;
-        match s.to_lowercase().as_str() {
-            "cargo" => Ok(CommandType::Cargo),
-            "shell" => Ok(CommandType::Shell),
-            _ => Ok(CommandType::Script), // Default to Script
-        }
+        // Use a custom visitor or another deserialization approach
+        // that defaults to Shell for unrecognized values
+        let s: Option<String> = Option::deserialize(deserializer)?;
+        Ok(match s.as_deref() {
+            Some("cargo") => CommandType::Cargo,
+            _ => CommandType::Shell,
+        })
     }
 }
 
