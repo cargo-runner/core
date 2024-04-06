@@ -5,10 +5,20 @@ use rx::config::{CommandConfig, Commands, Config}; // Adjust the path according 
 fn test_default_config() {
     let config: Config = Config::default();
 
-    // Assuming 'default' implies standard, default, and debug for run, test, and build respectively
-    assert_eq!(config.commands.run.default, "standard");
+    assert_eq!(config.commands.run.default, "default");
     assert_eq!(config.commands.test.default, "default");
-    assert_eq!(config.commands.build.default, "debug");
+    assert_eq!(config.commands.build.default, "default");
 
-    // Add more assertions here to verify the entire structure of your default Config
+    // command_type for all default is cargo
+    let run_default_config = config.commands.run.configs.get("default").unwrap();
+    assert_eq!(run_default_config.command_type, "cargo");
+    assert_eq!(run_default_config.command, "run");
+
+    let test_default_config = config.commands.test.configs.get("default").unwrap();
+    assert_eq!(test_default_config.command_type, "cargo");
+    assert_eq!(test_default_config.command, "test");
+
+    let build_default_config = config.commands.build.configs.get("default").unwrap();
+    assert_eq!(build_default_config.command_type, "cargo");
+    assert_eq!(build_default_config.command_type, "build");
 }
