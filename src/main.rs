@@ -1,22 +1,14 @@
-use std::{
-    error::Error,
-    sync::{Arc, Mutex},
-};
+use std::error::Error;
 
-use rx::{
-    config::Config,
-    helper::{read_file, GlobalString},
-};
+use rx::{config::Config, global::APP_CONFIG, helper::read_file};
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let file_str: GlobalString = Arc::new(Mutex::new(String::new()));
-
     // Assume you have this filename from somewhere
     let filename = "rx.toml";
-    read_file(filename, &file_str)?;
+    read_file(filename)?;
 
     // Lock the Mutex and get a reference to the String, don't try to move it
-    let file_content = file_str.lock().unwrap();
+    let file_content = APP_CONFIG.lock().unwrap();
 
     let config: Config = toml::from_str(&file_content)?;
 

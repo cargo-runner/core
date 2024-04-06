@@ -1,9 +1,9 @@
 use std::{error::Error, fs::File, io::BufRead, io::BufReader};
 
-use crate::global::GLOBAL_CONFIG_STATE;
+use crate::global::APP_CONFIG;
 
 pub fn append_new_line(data: &str) {
-    GLOBAL_CONFIG_STATE
+    APP_CONFIG
         .lock()
         .unwrap()
         .push_str(&(data.to_string() + "\n"));
