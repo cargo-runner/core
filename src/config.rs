@@ -1,7 +1,7 @@
 use serde::de::{self, Visitor};
 use serde::{Deserialize, Deserializer};
 use std::collections::HashMap;
-use std::{default, fmt};
+use std::fmt;
 
 #[derive(Debug, Clone, Default)]
 pub enum CommandContext {
@@ -83,36 +83,10 @@ pub struct Commands {
     pub script: Option<CommandConfig>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct CommandConfig {
     pub default: String,
     pub configs: HashMap<String, CommandDetails>,
-}
-
-impl<'de> Deserialize<'de> for CommandConfig {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        struct CommandConfigVisitor;
-
-        impl<'de> Visitor<'de> for CommandConfigVisitor {
-            type Value = CommandConfig;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("a command context")
-            }
-
-            fn visit_str<E>(self, value: &str) -> Result<CommandConfig, E>
-            where
-                E: de::Error,
-            {
-                Ok(CommandConfig::with_context(value))
-            }
-        }
-
-        deserializer.deserialize_any(CommandConfigVisitor)
-    }
 }
 
 impl CommandConfig {
