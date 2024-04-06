@@ -78,7 +78,7 @@ impl Default for Commands {
 
         Commands {
             run: CommandConfig {
-                default: "standard".into(),
+                default: "default".into(),
                 configs: run_configs,
             },
             test: CommandConfig {
@@ -86,10 +86,9 @@ impl Default for Commands {
                 configs: test_configs,
             },
             build: CommandConfig {
-                default: "debug".into(),
+                default: "default".into(),
                 configs: build_configs,
             },
         }
     }
 }
-
