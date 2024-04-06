@@ -3,11 +3,6 @@ use serde::{Deserialize, Deserializer};
 use std::collections::HashMap;
 use std::fmt;
 
-#[derive(Debug, Deserialize, Clone, Default)]
-pub struct Config {
-    pub commands: Commands,
-}
-
 #[derive(Debug, Clone)]
 pub enum CommandContext {
     Run,
@@ -50,15 +45,6 @@ impl<'de> Deserialize<'de> for CommandContext {
     }
 }
 
-#[derive(Debug, Deserialize, Clone)]
-pub struct Commands {
-    pub run: Option<CommandConfig>,
-    pub test: Option<CommandConfig>,
-    pub build: Option<CommandConfig>,
-    pub bench: Option<CommandConfig>,
-    pub script: Option<CommandConfig>,
-}
-
 #[derive(Debug, Clone)]
 pub enum CommandType {
     Cargo,
@@ -78,6 +64,20 @@ impl<'de> Deserialize<'de> for CommandType {
             _ => Ok(CommandType::Script), // Default to Script
         }
     }
+}
+
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct Config {
+    pub commands: Commands,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct Commands {
+    pub run: Option<CommandConfig>,
+    pub test: Option<CommandConfig>,
+    pub build: Option<CommandConfig>,
+    pub bench: Option<CommandConfig>,
+    pub script: Option<CommandConfig>,
 }
 
 #[derive(Debug, Clone)]
@@ -122,7 +122,7 @@ impl CommandConfig {
                     configs.insert(
                         "default".to_string(),
                         CommandDetails {
-                            command_type: Some(CommandType::Cargo),
+                            command_type: CommandType::Cargo,
                             command: Some("run".to_string()),
                             params: None,
                             env: None,
@@ -141,7 +141,7 @@ impl CommandConfig {
                     configs.insert(
                         "default".to_string(),
                         CommandDetails {
-                            command_type: Some(CommandType::Cargo),
+                            command_type: CommandType::Cargo,
                             command: Some("test".to_string()),
                             params: None,
                             env: None,
@@ -160,7 +160,7 @@ impl CommandConfig {
                     configs.insert(
                         "default".to_string(),
                         CommandDetails {
-                            command_type: Some(CommandType::Cargo),
+                            command_type: CommandType::Cargo,
                             command: Some("build".to_string()),
                             params: None,
                             env: None,
@@ -179,7 +179,7 @@ impl CommandConfig {
                     configs.insert(
                         "default".to_string(),
                         CommandDetails {
-                            command_type: Some(CommandType::Shell),
+                            command_type: CommandType::Cargo,
                             command: None,
                             params: None,
                             env: None,
@@ -210,18 +210,6 @@ impl Default for CommandConfig {
     }
 }
 
-#[derive(Debug, Deserialize, Clone, Default)]
-pub struct CommandDetails {
-    #[serde(rename = "type")]
-    pub command_type: Option<CommandType>,
-    pub command: Option<String>,
-    pub params: Option<String>,
-    pub env: Option<HashMap<String, String>>,
-    pub allow_multiple_instances: Option<bool>,
-    pub working_directory: Option<String>,
-    pub pre_command: Option<String>,
-}
-
 impl Default for Commands {
     fn default() -> Self {
         Commands {
@@ -232,4 +220,16 @@ impl Default for Commands {
             script: None,
         }
     }
+}
+
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct CommandDetails {
+    #[serde(rename = "type")]
+    pub command_type: CommandType,
+    pub command: Option<String>,
+    pub params: Option<String>,
+    pub env: Option<HashMap<String, String>>,
+    pub allow_multiple_instances: Option<bool>,
+    pub working_directory: Option<String>,
+    pub pre_command: Option<String>,
 }
