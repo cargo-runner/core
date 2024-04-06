@@ -12,7 +12,23 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let config: Config = toml::from_str(&file_content)?;
 
-    println!("{:#?}", config);
+    //println!("{:#?}", config.commands.run.configs.get("leptos").unwrap());
+    //println!("{:#?}", config.commands.run.configs.get("dioxus").unwrap());
+    //println!("{:#?}", config.commands.run.configs.get("default").unwrap());
+
+    let config2: Config = Config::default();
+    println!(
+        "{:#?}",
+        config2.commands.run.configs.get("default").unwrap()
+    );
+    println!(
+        "{:#?}",
+        config2.commands.test.configs.get("default").unwrap()
+    );
+    println!(
+        "{:#?}",
+        config2.commands.build.configs.get("default").unwrap()
+    );
 
     Ok(())
 }
