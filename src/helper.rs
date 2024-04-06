@@ -1,29 +1,24 @@
-use std::{
-    error::Error,
-    fs::File,
-    io::BufRead,
-    io::BufReader,
-    sync::{Arc, Mutex},
-};
+use std::{error::Error, fs::File, io::BufRead, io::BufReader};
 
-pub type GlobalString = Arc<Mutex<String>>;
+use crate::global::GLOBAL_CONFIG_STATE;
 
-pub fn append_to_global_str(state: &GlobalString, data: &str) {
-    // Append the line and a newline character
-    state.lock().unwrap().push_str(&(data.to_string() + "\n"));
+pub fn append_new_line(data: &str) {
+    GLOBAL_CONFIG_STATE
+        .lock()
+        .unwrap()
+        .push_str(&(data.to_string() + "\n"));
 }
 
-pub fn read_file(filename: &str, state: &GlobalString) -> Result<(), Box<dyn Error>> {
+pub fn read_file(filename: &str) -> Result<(), Box<dyn Error>> {
     let file = File::open(filename)?;
     let reader = BufReader::new(file);
 
-    for (index, line) in reader.lines().enumerate() {
+    for (number, line) in reader.lines().enumerate() {
         match line {
-            Ok(content) => {
-                // Append the content of each line to the global string
-                append_to_global_str(state, &content);
+            Ok(text) => {
+                append_new_line(&text);
             }
-            Err(_) => println!("Error reading line {}", index + 1),
+            Err(_) => println!("Error reading line {}", number + 1),
         }
     }
     Ok(())
