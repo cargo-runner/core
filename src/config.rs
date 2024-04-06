@@ -210,7 +210,7 @@ impl Default for CommandConfig {
     }
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct CommandDetails {
     #[serde(rename = "type")]
     pub command_type: Option<CommandType>,
