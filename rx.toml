@@ -1,0 +1,40 @@
+[commands]
+
+## Run Configuration
+[commands.run]
+default = "standard"
+
+[commands.run.configs.standard]
+type = "cargo"
+command = "run --package ${packageName} --bin ${binaryName}"
+params = ""
+env = {}
+allow_multiple_instances = false
+working_directory = "${workspaceFolder}"
+pre_command = ""
+
+## Test Configuration
+[commands.test]
+default = "default"
+
+[commands.test.configs.default]
+type = "cargo"
+command = "test --package ${packageName}"
+params = ""
+env = {}
+allow_multiple_instances = true
+working_directory = "${workspaceFolder}"
+pre_command = ""
+
+## Build Configuration
+[commands.build]
+default = "debug"
+
+[commands.build.configs.debug]
+type = "cargo"
+command = "build --package ${packageName}"
+params = ""
+env = {}
+allow_multiple_instances = false
+working_directory = "${workspaceFolder}"
+pre_command = ""
