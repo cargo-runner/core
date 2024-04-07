@@ -2,14 +2,41 @@
 
 ## Run Configuration
 [commands.run]
-default = "standard"
+default = "dioxus"
 
-[commands.run.configs.standard]
+[commands.run.configs.default]
 type = "cargo"
 command = "run --package ${packageName} --bin ${binaryName}"
 params = ""
 env = {}
 allow_multiple_instances = false
+working_directory = "${workspaceFolder}"
+pre_command = ""
+
+[commands.run.configs.watch]
+type = "cargo"
+command = "watch -x run"
+params = ""
+env = {}
+allow_multiple_instances = true
+working_directory = "${workspaceFolder}"
+pre_command = ""
+
+[commands.run.configs.leptos]
+type = "shell"
+command = "cargo leptos watch"
+params = ""
+env = {}
+allow_multiple_instances = true
+working_directory = "${workspaceFolder}"
+pre_command = ""
+
+[commands.run.configs.dioxus]
+type = "shell"
+command = "dx serve --hot-reload"
+params = ""
+env = {}
+allow_multiple_instances = true
 working_directory = "${workspaceFolder}"
 pre_command = ""
 
@@ -28,11 +55,23 @@ pre_command = ""
 
 ## Build Configuration
 [commands.build]
-default = "debug"
+default = "default"
 
-[commands.build.configs.debug]
+[commands.build.configs.default]
 type = "cargo"
 command = "build --package ${packageName}"
+params = ""
+env = {}
+allow_multiple_instances = false
+working_directory = "${workspaceFolder}"
+pre_command = ""
+
+[commands.script]
+default = "default"
+
+[commands.script.configs.default]
+type = "shell"
+command = "bunx tailwindcss -i ./input.css -o ./public/tailwind.css --watch"
 params = ""
 env = {}
 allow_multiple_instances = false
