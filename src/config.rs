@@ -3,6 +3,11 @@ use serde::{Deserialize, Deserializer};
 use std::collections::HashMap;
 use std::fmt;
 
+use crate::global::{
+    DEFAULT_BENCH_CONFIG, DEFAULT_BUILD_CONFIG, DEFAULT_RUN_CONFIG, DEFAULT_SCRIPT_CONFIG,
+    DEFAULT_TEST_CONFIG,
+};
+
 #[derive(Debug, Clone, Default)]
 pub enum CommandContext {
     Run,
@@ -83,6 +88,24 @@ pub struct Commands {
     pub script: Option<CommandConfig>,
 }
 
+impl Commands {
+    pub fn get_command_config<'a>(
+        &'a self,
+        command_context: CommandContext,
+        config_name: &str,
+    ) -> Option<&'a CommandDetails> {
+        let command_config = match command_context {
+            CommandContext::Run => self.run.as_ref().or_else(|| DEFAULT_RUN_CONFIG.get()),
+            CommandContext::Test => self.test.as_ref().or_else(|| DEFAULT_TEST_CONFIG.get()),
+            CommandContext::Build => self.build.as_ref().or_else(|| DEFAULT_BUILD_CONFIG.get()),
+            CommandContext::Bench => self.bench.as_ref().or_else(|| DEFAULT_BENCH_CONFIG.get()),
+            CommandContext::Script => self.script.as_ref().or_else(|| DEFAULT_SCRIPT_CONFIG.get()),
+        };
+
+        command_config.and_then(|config| config.configs.get(config_name))
+    }
+}
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct CommandConfig {
     pub default: String,
@@ -156,7 +179,7 @@ impl CommandConfig {
                     configs.insert(
                         "default".to_string(),
                         CommandDetails {
-                            command_type: CommandType::Cargo,
+                            command_type: CommandType::Shell,
                             command: None,
                             params: None,
                             env: None,
