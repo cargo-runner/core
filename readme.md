@@ -8,11 +8,18 @@ Note: You can have multiple Configs on your Project
 
 The Default Path where the Config File would be located is on on your $WorkspaceFolder
 
-We can load our config as such
+We can load our default config
 
 ```rust
-let filepath =  Path::new("rx.toml");
-let config:Config = Config::load(filepath);
+let default_config_path = PathBuf::from("rx.toml");
+
+    init_config(default_config_path);
+    // override default_config_path with specified path
+    let new_config = Some(PathBuf::from("rx.toml"));
+    let config: Config = Config::load(new_config)?;
+
+    // or we can load and use the DEFAULT_CONFIG_PATH
+    let config: Config = Config::load(None)?;
 ```
 
 
