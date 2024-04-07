@@ -1,4 +1,4 @@
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::error::Error;
 use std::path::PathBuf;
@@ -17,27 +17,12 @@ pub enum CommandContext {
     Script,
 }
 
-#[derive(Debug, Serialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(rename_all = "lowercase")]
 pub enum CommandType {
     Cargo,
     #[default]
     Shell,
-}
-
-// Implement Deserialize manually to include default behavior
-impl<'de> Deserialize<'de> for CommandType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        // Use a custom visitor or another deserialization approach
-        // that defaults to Shell for unrecognized values
-        let s: Option<String> = Option::deserialize(deserializer)?;
-        Ok(match s.as_deref() {
-            Some("cargo") => CommandType::Cargo,
-            _ => CommandType::Shell,
-        })
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -106,86 +91,35 @@ pub struct CommandConfig {
 }
 
 impl CommandConfig {
+    fn default_command_details(command: &str, command_type: CommandType) -> CommandDetails {
+        CommandDetails {
+            command_type,
+            command: Some(command.to_string()),
+            params: Some("".to_string()),
+            allow_multiple_instances: Some(false),
+            working_directory: Some("${workspaceFolder}".to_string()),
+            pre_command: Some("".to_string()),
+            env: Some(HashMap::new()),
+        }
+    }
     pub fn with_context(context: &str) -> Self {
-        match context {
-            "run" => Self {
-                default: "default".into(),
-                configs: {
-                    let mut configs = HashMap::new();
-                    configs.insert(
-                        "default".to_string(),
-                        CommandDetails {
-                            command_type: CommandType::Cargo,
-                            command: Some(
-                                "run --package ${packageName} --bin ${binaryName}".to_string(),
-                            ),
-                            params: Some("".to_string()),
-                            allow_multiple_instances: Some(false),
-                            working_directory: Some("${workspaceFolder}".to_string()),
-                            pre_command: Some("".to_string()),
-                            env: Some(HashMap::new()),
-                        },
-                    );
-                    configs
-                },
-            },
-            "test" => Self {
-                default: "default".into(),
-                configs: {
-                    let mut configs = HashMap::new();
-                    configs.insert(
-                        "default".to_string(),
-                        CommandDetails {
-                            command_type: CommandType::Cargo,
-                            command: Some("test".to_string()),
-                            params: Some("".to_string()),
-                            allow_multiple_instances: Some(false),
-                            working_directory: Some("${workspaceFolder}".to_string()),
-                            pre_command: Some("".to_string()),
-                            env: Some(HashMap::new()),
-                        },
-                    );
-                    configs
-                },
-            },
-            "build" => Self {
-                default: "default".into(),
-                configs: {
-                    let mut configs = HashMap::new();
-                    configs.insert(
-                        "default".to_string(),
-                        CommandDetails {
-                            command_type: CommandType::Cargo,
-                            command: Some("build".to_string()),
-                            params: Some("".to_string()),
-                            allow_multiple_instances: Some(false),
-                            working_directory: Some("${workspaceFolder}".to_string()),
-                            pre_command: Some("".to_string()),
-                            env: Some(HashMap::new()),
-                        },
-                    );
-                    configs
-                },
-            },
-            _ => Self {
-                default: "default".into(),
-                configs: {
-                    let mut configs = HashMap::new();
-                    configs.insert(
-                        "default".to_string(),
-                        CommandDetails {
-                            command_type: CommandType::Shell,
-                            command: None,
-                            params: Some("".to_string()),
-                            allow_multiple_instances: Some(false),
-                            working_directory: Some("${workspaceFolder}".to_string()),
-                            pre_command: Some("".to_string()),
-                            env: Some(HashMap::new()),
-                        },
-                    );
-                    configs
-                },
-            },
+        let default_details = match context {
+            "run" => Self::default_command_details(
+                "run --package ${packageName} --bin ${binaryName}",
+                CommandType::Cargo,
+            ),
+            "test" => Self::default_command_details("test", CommandType::Cargo),
+            "build" => Self::default_command_details("build", CommandType::Cargo),
+            "bench" => Self::default_command_details("bench", CommandType::Cargo),
+            _ => Self::default_command_details("", CommandType::Shell),
+        };
+
+        let mut configs = HashMap::new();
+        configs.insert("default".to_string(), default_details);
+
+        Self {
+            default: "default".into(),
+            configs,
         }
     }
     pub fn update_config(&mut self, key: String, details: CommandDetails) {
