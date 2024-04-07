@@ -155,7 +155,22 @@ impl CommandConfig {
         self.configs.insert(key, details);
     }
     pub fn remove_config(&mut self, key: &str) {
+        // Remove the specified config key
         self.configs.remove(key);
+
+        // Check if the removed key was the default and reset the default if necessary
+        if self.default == key {
+            // Reset to a predefined fallback default key
+            // Adjust this logic based on how you want to handle resetting the default
+            // For example, you could check for other existing keys and choose one of them as the new default
+            self.default = "default".to_string(); // Assuming "default" is a sensible fallback default key
+
+            // Alternatively, find the first available key in `self.configs` to set as new default
+            // if you prefer dynamically choosing a new default based on existing keys
+            /*
+            self.default = self.configs.keys().next().cloned().unwrap_or_else(|| "default".to_string());
+            */
+        }
     }
 }
 
