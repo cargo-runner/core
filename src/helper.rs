@@ -13,7 +13,7 @@ use crate::{
     },
 };
 
-pub fn append_new_line(data: &str) {
+fn append_new_line(data: &str) {
     CONFIGURATION_FILE_CONTENT
         .lock()
         .unwrap()
