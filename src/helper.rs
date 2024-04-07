@@ -2,19 +2,19 @@ use std::{
     error::Error,
     fs::File,
     io::{BufRead, BufReader},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 use crate::{
     config::CommandConfig,
     global::{
-        CONFIGURATION_FILE, DEFAULT_BENCH_CONFIG, DEFAULT_BUILD_CONFIG, DEFAULT_RUN_CONFIG,
-        DEFAULT_SCRIPT_CONFIG, DEFAULT_TEST_CONFIG,
+        CONFIGURATION_FILE_CONTENT, DEFAULT_BENCH_CONFIG, DEFAULT_BUILD_CONFIG,
+        DEFAULT_CONFIG_PATH, DEFAULT_RUN_CONFIG, DEFAULT_SCRIPT_CONFIG, DEFAULT_TEST_CONFIG,
     },
 };
 
 pub fn append_new_line(data: &str) {
-    CONFIGURATION_FILE
+    CONFIGURATION_FILE_CONTENT
         .lock()
         .unwrap()
         .push_str(&(data.to_string() + "\n"));
@@ -35,8 +35,8 @@ pub fn read_file(path: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn init_default_config() {
-    // this pattern let _ is use to silence compiler since we know our method wont fail
+pub fn init_config(default_path: &Path) {
+    let _ = DEFAULT_CONFIG_PATH.set(PathBuf::from(default_path));
     let _ = DEFAULT_RUN_CONFIG.set(CommandConfig::with_context("run"));
     let _ = DEFAULT_TEST_CONFIG.set(CommandConfig::with_context("test"));
     let _ = DEFAULT_BUILD_CONFIG.set(CommandConfig::with_context("build"));
