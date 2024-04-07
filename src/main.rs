@@ -17,7 +17,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         "{:#?}",
         config
             .commands
-            .get_command_config(CommandContext::Run, "leptos")
+            .get_command_config(CommandContext::Run, "default")
     );
 
     config.save(None)?;
