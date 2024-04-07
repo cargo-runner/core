@@ -1,26 +1,32 @@
 use std::{error::Error, path::PathBuf};
 
 use rx::{
-    config::{CommandContext, Config},
+    config::{CommandContext, CommandType, Config},
+    config_builder::CommandDetailsBuilder,
     helper::init_config,
 };
 
+
 fn main() -> Result<(), Box<dyn Error>> {
     let default_config_path = PathBuf::from("rx.toml");
-
     init_config(default_config_path);
 
-    let new_config = Some(PathBuf::from("rx.toml"));
-    let config: Config = Config::load(new_config)?;
+    let mut config: Config = Config::load(Some(PathBuf::from("rx.toml")))?;
 
-    println!(
-        "{:#?}",
-        config
-            .commands
-            .get_command_config(CommandContext::Run, "default")
-    );
+    // Build command details
+    let command_details = CommandDetailsBuilder::new(CommandType::Cargo, "run --release")
+        .params("--verbose")
+        .build();
 
-    config.save(None)?;
+    // Simplify accessing and updating command configuration
+    let config_key = "leptos";
+    let run_config = config.commands.get_or_insert_command_config(CommandContext::Run);
+    run_config.update_config(config_key.to_string(), command_details);
+    // If needed to remove, you can directly call it without checking for existence
+    // run_config.remove_config(config_key);
+
+    // Save the updated configuration
+    config.save(Some(PathBuf::from("rx.toml")))?;
 
     Ok(())
 }
