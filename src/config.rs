@@ -1,5 +1,5 @@
 use serde::de::{self, Visitor};
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
@@ -12,7 +12,7 @@ use crate::global::{
 };
 use crate::helper::read_file;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Serialize, Clone, Default)]
 pub enum CommandContext {
     Run,
     Test,
@@ -55,7 +55,7 @@ impl<'de> Deserialize<'de> for CommandContext {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Serialize, Clone, Default)]
 pub enum CommandType {
     Cargo,
     #[default]
@@ -78,7 +78,7 @@ impl<'de> Deserialize<'de> for CommandType {
     }
 }
 
-#[derive(Debug, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Config {
     pub commands: Commands,
 }
@@ -97,16 +97,25 @@ impl Config {
         Ok(config)
     }
 
-    pub fn save(&self) -> Result<(), Box<dyn Error>> {
-        let file_content = CONFIGURATION_FILE_CONTENT.lock().unwrap();
+    pub fn save(&self, path: Option<PathBuf>) -> Result<(), Box<dyn Error>> {
+        // Determine the file path to use: provided path or default
+        let file_path = path.unwrap_or_else(|| {
+            DEFAULT_CONFIG_PATH
+                .get()
+                .expect("DEFAULT_CONFIG_PATH not set")
+                .clone()
+        });
 
-        let config: Config = toml::from_str(&file_content).unwrap_or(Config::default());
+        let toml_string = toml::to_string_pretty(&self)?;
+
+        // Write the serialized string to the file
+        std::fs::write(file_path, toml_string.as_bytes())?;
 
         Ok(())
     }
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Commands {
     pub run: Option<CommandConfig>,
     pub test: Option<CommandConfig>,
@@ -133,7 +142,7 @@ impl Commands {
     }
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CommandConfig {
     pub default: String,
     pub configs: HashMap<String, CommandDetails>,
@@ -249,7 +258,7 @@ impl Default for Commands {
     }
 }
 
-#[derive(Debug, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct CommandDetails {
     #[serde(rename = "type")]
     pub command_type: CommandType,
