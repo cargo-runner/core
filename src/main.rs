@@ -1,4 +1,7 @@
-use std::{error::Error, path::Path};
+use std::{
+    error::Error,
+    path::{Path, PathBuf},
+};
 
 use rx::{
     config::{CommandContext, Config},
@@ -6,14 +9,12 @@ use rx::{
 };
 
 fn main() -> Result<(), Box<dyn Error>> {
-    // note this should be from the env::args()
-    let default_config_path = Path::new("rx.toml");
+    let default_config_path = PathBuf::from("rx.toml");
 
     init_config(default_config_path);
 
-    // we can override Config or load different config by passing in a Path
-    // If we Passed None we use the DEFAULT_CONFIG_PATH
-    let config: Config = Config::load(None)?;
+    let new_config = Some(PathBuf::from("rx.toml"));
+    let config: Config = Config::load(new_config)?;
 
     println!(
         "{:#?}",
