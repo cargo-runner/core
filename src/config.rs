@@ -4,6 +4,7 @@ use std::error::Error;
 use std::path::PathBuf;
 use toml;
 
+use crate::errors::ConfigError;
 use crate::global::{CONFIGURATION_FILE_CONTENT, DEFAULT_CONFIG_PATH};
 use crate::helper::{read_file, write_to_config_file};
 
@@ -17,7 +18,7 @@ pub enum CommandContext {
     Script,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum CommandType {
     Cargo,
@@ -25,7 +26,7 @@ pub enum CommandType {
     Shell,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq)]
 pub struct Config {
     pub commands: Commands,
 }
@@ -63,7 +64,7 @@ impl Config {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct Commands {
     pub run: Option<CommandConfig>,
     pub test: Option<CommandConfig>,
@@ -82,9 +83,37 @@ impl Commands {
             CommandContext::Script => self.script.get_or_insert_with(CommandConfig::default),
         }
     }
+    pub fn set_default_config(
+        &mut self,
+        context: CommandContext,
+        new_default_key: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let command_config = match context {
+            CommandContext::Run => &mut self.run,
+            CommandContext::Test => &mut self.test,
+            CommandContext::Build => &mut self.build,
+            CommandContext::Bench => &mut self.bench,
+            CommandContext::Script => &mut self.script,
+        };
+
+        if let Some(config) = command_config {
+            if config.configs.contains_key(new_default_key) {
+                config.default = new_default_key.to_string();
+                Ok(())
+            } else {
+                Err(Box::new(ConfigError::ConfigKeyNotFound(
+                    new_default_key.to_string(),
+                )))
+            }
+        } else {
+            Err(Box::new(ConfigError::ConfigKeyNotFound(
+                new_default_key.to_string(),
+            )))
+        }
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct CommandConfig {
     pub default: String,
     pub configs: HashMap<String, CommandDetails>,
@@ -151,7 +180,7 @@ impl Default for Commands {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq)]
 pub struct CommandDetails {
     #[serde(rename = "type")]
     pub command_type: CommandType,
