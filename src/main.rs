@@ -21,14 +21,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     let run_config = config
         .commands
         .get_or_insert_command_config(CommandContext::Run);
+
     run_config.update_config(config_key.to_string(), command_details);
 
     // If needed to remove, you can directly call it without checking for existence
     //run_config.remove_config(config_key);
 
-    config
-        .commands
-        .set_default_config(CommandContext::Run, "leptos")?;
+    //config
+    //    .commands
+    //    .set_default_config(CommandContext::Run, "leptos")?;
+
+    run_config.update_params("leptos", "watch")?;
 
     // Save the updated configuration
     config.save(Some(PathBuf::from("rx.toml")))?;
