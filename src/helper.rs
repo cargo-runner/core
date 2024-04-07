@@ -5,10 +5,16 @@ use std::{
     path::Path,
 };
 
-use crate::global::APP_CONFIG;
+use crate::{
+    config::CommandConfig,
+    global::{
+        CONFIGURATION_FILE, DEFAULT_BENCH_CONFIG, DEFAULT_BUILD_CONFIG, DEFAULT_RUN_CONFIG,
+        DEFAULT_SCRIPT_CONFIG, DEFAULT_TEST_CONFIG,
+    },
+};
 
 pub fn append_new_line(data: &str) {
-    APP_CONFIG
+    CONFIGURATION_FILE
         .lock()
         .unwrap()
         .push_str(&(data.to_string() + "\n"));
@@ -27,4 +33,13 @@ pub fn read_file(path: &Path) -> Result<(), Box<dyn Error>> {
         }
     }
     Ok(())
+}
+
+pub fn init_default_config() {
+    // this pattern let _ is use to silence compiler since we know our method wont fail
+    let _ = DEFAULT_RUN_CONFIG.set(CommandConfig::with_context("run"));
+    let _ = DEFAULT_TEST_CONFIG.set(CommandConfig::with_context("test"));
+    let _ = DEFAULT_BUILD_CONFIG.set(CommandConfig::with_context("build"));
+    let _ = DEFAULT_BENCH_CONFIG.set(CommandConfig::with_context("bench"));
+    let _ = DEFAULT_SCRIPT_CONFIG.set(CommandConfig::with_context("script"));
 }
