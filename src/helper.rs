@@ -1,7 +1,7 @@
 use std::{
     error::Error,
     fs::File,
-    io::{BufRead, BufReader},
+    io::{BufRead, BufReader, BufWriter, Write},
     path::{Path, PathBuf},
 };
 
@@ -32,6 +32,18 @@ pub fn read_file(path: &Path) -> Result<(), Box<dyn Error>> {
             Err(_) => println!("Error reading line {}", number + 1),
         }
     }
+    Ok(())
+}
+
+pub fn write_to_config_file(path: &Path, content: &str) -> Result<(), Box<dyn Error>> {
+    let file = File::create(path)?;
+    let mut writer = BufWriter::new(file);
+
+    for line in content.lines() {
+        writeln!(writer, "{}", line)?;
+    }
+
+    writer.flush()?;
     Ok(())
 }
 
