@@ -131,6 +131,16 @@ impl CommandConfig {
             env: Some(HashMap::new()),
         }
     }
+
+    pub fn update_params(&mut self, config_key: &str, new_params: &str) -> Result<(), ConfigError> {
+        if let Some(details) = self.configs.get_mut(config_key) {
+            details.params = Some(new_params.to_string());
+            Ok(())
+        } else {
+            Err(ConfigError::ConfigKeyNotFound(config_key.to_string()))
+        }
+    }
+
     pub fn with_context(context: &str) -> Self {
         let default_details = match context {
             "run" => Self::default_command_details(
@@ -151,9 +161,11 @@ impl CommandConfig {
             configs,
         }
     }
+
     pub fn update_config(&mut self, key: String, details: CommandDetails) {
         self.configs.insert(key, details);
     }
+
     pub fn remove_config(&mut self, key: &str) {
         // Remove the specified config key
         self.configs.remove(key);
