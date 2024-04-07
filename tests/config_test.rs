@@ -163,7 +163,7 @@ env = {}
     fn test_update_and_add_config_key() {
         let (mut config, config_path, _temp_dir) = setup(None); // Use _temp_dir to hold onto the TempDir instance
 
-        let config_key = String::from("leptos");
+        let config_key = "leptos";
 
         let new_details = CommandDetailsBuilder::new(CommandType::Cargo, "leptos watch").build();
 
@@ -171,7 +171,7 @@ env = {}
         let run_config = config
             .commands
             .get_or_insert_command_config(CommandContext::Run);
-        run_config.update_config(config_key.clone(), new_details);
+        run_config.update_config(config_key, new_details);
 
         // Save the updated configuration
         assert!(
@@ -190,13 +190,13 @@ env = {}
         );
         let reloaded_run_config = reloaded_config.commands.run.unwrap();
         assert!(
-            reloaded_run_config.configs.contains_key(&config_key),
+            reloaded_run_config.configs.contains_key(config_key),
             "Config key 'leptos' should be present in the run configs"
         );
 
         let updated_details = reloaded_run_config
             .configs
-            .get(&config_key)
+            .get(config_key)
             .expect("Config key 'leptos' was not found after update");
         assert_eq!(
             updated_details.command.as_deref(),
@@ -217,7 +217,7 @@ env = {}
             let run_config = config
                 .commands
                 .get_or_insert_command_config(CommandContext::Run);
-            run_config.update_config(config_key.to_string(), details);
+            run_config.update_config(config_key, details);
         }
 
         // Initially set 'leptos' as the default
@@ -283,7 +283,7 @@ env = {}
             let run_config = config
                 .commands
                 .get_or_insert_command_config(CommandContext::Run);
-            run_config.update_config(config_key.to_string(), details);
+            run_config.update_config(config_key, details);
         }
         // add params
         {
