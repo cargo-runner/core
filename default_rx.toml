@@ -5,11 +5,11 @@ default = "default"
 type = "cargo"
 command = "run --package ${packageName} --bin ${binaryName}"
 params = ""
-env = {}
 allow_multiple_instances = false
 working_directory = "${workspaceFolder}"
 pre_command = ""
 
+[commands.run.configs.default.env]
 
 [commands.test]
 default = "default"
@@ -18,11 +18,11 @@ default = "default"
 type = "cargo"
 command = "test"
 params = ""
-env = {}
 allow_multiple_instances = false
 working_directory = "${workspaceFolder}"
 pre_command = ""
 
+[commands.test.configs.default.env]
 
 [commands.build]
 default = "default"
@@ -31,11 +31,11 @@ default = "default"
 type = "cargo"
 command = "build"
 params = ""
-env = {}
 allow_multiple_instances = false
 working_directory = "${workspaceFolder}"
 pre_command = ""
 
+[commands.build.configs.default.env]
 
 [commands.bench]
 default = "default"
@@ -44,7 +44,8 @@ default = "default"
 type = "cargo"
 command = "bench"
 params = ""
-env = {}
 allow_multiple_instances = false
 working_directory = "${workspaceFolder}"
 pre_command = ""
+
+[commands.bench.configs.default.env]
