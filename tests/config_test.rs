@@ -271,4 +271,63 @@ env = {}
             "Default config key should no longer be 'leptos'"
         );
     }
+    #[test]
+    fn test_add_and_remove_params() {
+        let (mut config, _config_path, _temp_dir) = setup(None);
+
+        let config_key = "leptos";
+
+        let details = CommandDetailsBuilder::new(CommandType::Cargo, "cargo watch").build();
+
+        {
+            let run_config = config
+                .commands
+                .get_or_insert_command_config(CommandContext::Run);
+            run_config.update_config(config_key.to_string(), details);
+        }
+        // add params
+        {
+            let run_config = config
+                .commands
+                .get_or_insert_command_config(CommandContext::Run);
+
+            run_config
+                .update_params(config_key, "--initial-params")
+                .unwrap();
+            // Assert that parameters have been added
+            assert_eq!(
+                run_config
+                    .configs
+                    .get(config_key)
+                    .unwrap()
+                    .params
+                    .to_owned(),
+                Some(String::from("--initial-params")),
+                "Parameters should match '--initial-params'"
+            );
+        }
+
+        // Remove parameters by setting them to an empty string
+        {
+            let run_config = config
+                .commands
+                .get_or_insert_command_config(CommandContext::Run);
+
+            run_config
+                .update_params(config_key, "")
+                .expect("Failed to remove parameters");
+
+            // Assert that parameters have been effectively removed
+            assert_eq!(
+                run_config
+                    .configs
+                    .get(config_key)
+                    .unwrap()
+                    .params
+                    .as_deref(),
+                Some(""),
+                "Parameters should be an empty string now"
+            );
+        }
+    }
 }
