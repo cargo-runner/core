@@ -2,7 +2,7 @@
 default = "default"
 
 [commands.run.configs.default]
-type = "Cargo"
+type = "cargo"
 command = "run --package ${packageName} --bin ${binaryName}"
 params = ""
 allow_multiple_instances = false
@@ -11,11 +11,21 @@ pre_command = ""
 
 [commands.run.configs.default.env]
 
+[commands.run.configs.leptos]
+type = "cargo"
+command = "leptos"
+params = "watch"
+allow_multiple_instances = false
+working_directory = "${workspaceFolder}"
+pre_command = ""
+
+[commands.run.configs.leptos.env]
+
 [commands.test]
 default = "default"
 
 [commands.test.configs.default]
-type = "Cargo"
+type = "cargo"
 command = "test"
 params = ""
 allow_multiple_instances = false
@@ -28,7 +38,7 @@ pre_command = ""
 default = "default"
 
 [commands.build.configs.default]
-type = "Cargo"
+type = "cargo"
 command = "build"
 params = ""
 allow_multiple_instances = false
@@ -41,7 +51,8 @@ pre_command = ""
 default = "default"
 
 [commands.bench.configs.default]
-type = "Shell"
+type = "cargo"
+command = "bench"
 params = ""
 allow_multiple_instances = false
 working_directory = "${workspaceFolder}"
