@@ -35,8 +35,8 @@ pub fn read_file(path: &Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn init_config(default_path: &Path) {
-    let _ = DEFAULT_CONFIG_PATH.set(PathBuf::from(default_path));
+pub fn init_config(default_path: PathBuf) {
+    let _ = DEFAULT_CONFIG_PATH.set(default_path);
     let _ = DEFAULT_RUN_CONFIG.set(CommandConfig::with_context("run"));
     let _ = DEFAULT_TEST_CONFIG.set(CommandConfig::with_context("test"));
     let _ = DEFAULT_BUILD_CONFIG.set(CommandConfig::with_context("build"));
