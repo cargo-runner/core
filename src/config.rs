@@ -10,7 +10,7 @@ use crate::global::{
     CONFIGURATION_FILE_CONTENT, DEFAULT_BENCH_CONFIG, DEFAULT_BUILD_CONFIG, DEFAULT_CONFIG_PATH,
     DEFAULT_RUN_CONFIG, DEFAULT_SCRIPT_CONFIG, DEFAULT_TEST_CONFIG,
 };
-use crate::helper::read_file;
+use crate::helper::{read_file, write_to_config_file};
 
 #[derive(Debug, Serialize, Clone, Default)]
 pub enum CommandContext {
@@ -106,10 +106,11 @@ impl Config {
                 .clone()
         });
 
+        // We need Config Struct and all Other Fields (struct or enum) to be impl Serialize
         let toml_string = toml::to_string_pretty(&self)?;
 
-        // Write the serialized string to the file
-        std::fs::write(file_path, toml_string.as_bytes())?;
+        // Write the serialized string to the file line by line
+        write_to_config_file(&file_path, &toml_string)?;
 
         Ok(())
     }
@@ -159,12 +160,14 @@ impl CommandConfig {
                         "default".to_string(),
                         CommandDetails {
                             command_type: CommandType::Cargo,
-                            command: Some("run".to_string()),
-                            params: None,
-                            env: None,
-                            allow_multiple_instances: None,
-                            working_directory: None,
-                            pre_command: None,
+                            command: Some(
+                                "run --package ${packageName} --bin ${binaryName}".to_string(),
+                            ),
+                            params: Some("".to_string()),
+                            allow_multiple_instances: Some(false),
+                            working_directory: Some("${workspaceFolder}".to_string()),
+                            pre_command: Some("".to_string()),
+                            env: Some(HashMap::new()),
                         },
                     );
                     configs
@@ -179,11 +182,11 @@ impl CommandConfig {
                         CommandDetails {
                             command_type: CommandType::Cargo,
                             command: Some("test".to_string()),
-                            params: None,
-                            env: None,
-                            allow_multiple_instances: None,
-                            working_directory: None,
-                            pre_command: None,
+                            params: Some("".to_string()),
+                            allow_multiple_instances: Some(false),
+                            working_directory: Some("${workspaceFolder}".to_string()),
+                            pre_command: Some("".to_string()),
+                            env: Some(HashMap::new()),
                         },
                     );
                     configs
@@ -198,11 +201,11 @@ impl CommandConfig {
                         CommandDetails {
                             command_type: CommandType::Cargo,
                             command: Some("build".to_string()),
-                            params: None,
-                            env: None,
-                            allow_multiple_instances: None,
-                            working_directory: None,
-                            pre_command: None,
+                            params: Some("".to_string()),
+                            allow_multiple_instances: Some(false),
+                            working_directory: Some("${workspaceFolder}".to_string()),
+                            pre_command: Some("".to_string()),
+                            env: Some(HashMap::new()),
                         },
                     );
                     configs
@@ -217,11 +220,11 @@ impl CommandConfig {
                         CommandDetails {
                             command_type: CommandType::Shell,
                             command: None,
-                            params: None,
-                            env: None,
-                            allow_multiple_instances: None,
-                            working_directory: None,
-                            pre_command: None,
+                            params: Some("".to_string()),
+                            allow_multiple_instances: Some(false),
+                            working_directory: Some("${workspaceFolder}".to_string()),
+                            pre_command: Some("".to_string()),
+                            env: Some(HashMap::new()),
                         },
                     );
                     configs
