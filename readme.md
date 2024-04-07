@@ -8,9 +8,16 @@ Note: You can have multiple Configs on your Project
 
 The Default Path where the Config File would be located is on on your $WorkspaceFolder
 
+We can load our config as such
+
+```rust
+let filepath =  Path::new("rx.toml");
+let config:Config = Config::load(filepath);
+```
+
 
 <details>
-  <summary>Example of Config</summary>
+  <summary>Example of rx.toml config file</summary>
   </br>
 ```toml
 [commands]
@@ -120,8 +127,3 @@ config
 ```
 
 where the second param is the name of your config_name if the config_name dont exist it just return None
-
-We can read the file as such
-```rust
-let config: Config = toml::from_str(&file_content).unwrap_or(Config::default());
-```
