@@ -3,13 +3,12 @@ use serde::{Deserialize, Deserializer};
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
-use std::fs::{self, File};
-use std::path::Path;
+use std::path::PathBuf;
 use toml;
 
 use crate::global::{
-    CONFIGURATION_FILE, DEFAULT_BENCH_CONFIG, DEFAULT_BUILD_CONFIG, DEFAULT_RUN_CONFIG,
-    DEFAULT_SCRIPT_CONFIG, DEFAULT_TEST_CONFIG,
+    CONFIGURATION_FILE_CONTENT, DEFAULT_BENCH_CONFIG, DEFAULT_BUILD_CONFIG, DEFAULT_CONFIG_PATH,
+    DEFAULT_RUN_CONFIG, DEFAULT_SCRIPT_CONFIG, DEFAULT_TEST_CONFIG,
 };
 use crate::helper::read_file;
 
@@ -85,13 +84,25 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn load(path: &Path) -> Result<Config, Box<dyn Error>> {
-        read_file(path)?;
+    pub fn load(path: Option<PathBuf>) -> Result<Config, Box<dyn Error>> {
+        if let Some(file_path) = path {
+            read_file(file_path.as_path())?;
+        } else {
+            read_file(DEFAULT_CONFIG_PATH.get().unwrap())?;
+        }
 
-        let file_content = CONFIGURATION_FILE.lock().unwrap();
+        let file_content = CONFIGURATION_FILE_CONTENT.lock().unwrap();
 
         let config: Config = toml::from_str(&file_content).unwrap_or(Config::default());
         Ok(config)
+    }
+
+    pub fn save(&self) -> Result<(), Box<dyn Error>> {
+        let file_content = CONFIGURATION_FILE_CONTENT.lock().unwrap();
+
+        let config: Config = toml::from_str(&file_content).unwrap_or(Config::default());
+
+        Ok(())
     }
 }
 
