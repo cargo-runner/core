@@ -6,22 +6,23 @@ use rx::{
     helper::init_config,
 };
 
-
 fn main() -> Result<(), Box<dyn Error>> {
     let default_config_path = PathBuf::from("rx.toml");
     init_config(default_config_path);
 
     let mut config: Config = Config::load(Some(PathBuf::from("rx.toml")))?;
 
-    // Build command details
-    let command_details = CommandDetailsBuilder::new(CommandType::Cargo, "run --release")
-        .params("--verbose")
+    let command_details = CommandDetailsBuilder::new(CommandType::Cargo, "leptos")
+        .params("watch")
         .build();
 
-    // Simplify accessing and updating command configuration
     let config_key = "leptos";
-    let run_config = config.commands.get_or_insert_command_config(CommandContext::Run);
+
+    let run_config = config
+        .commands
+        .get_or_insert_command_config(CommandContext::Run);
     run_config.update_config(config_key.to_string(), command_details);
+
     // If needed to remove, you can directly call it without checking for existence
     // run_config.remove_config(config_key);
 
