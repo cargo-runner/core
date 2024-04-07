@@ -132,13 +132,88 @@ impl CommandConfig {
         }
     }
 
-    pub fn update_params(&mut self, config_key: &str, new_params: &str) -> Result<(), ConfigError> {
-        if let Some(details) = self.configs.get_mut(config_key) {
-            details.params = Some(new_params.to_string());
+    fn update_command_details<F>(&mut self, key: &str, mut update_fn: F) -> Result<(), ConfigError>
+    where
+        F: FnMut(&mut CommandDetails),
+    {
+        if let Some(details) = self.configs.get_mut(key) {
+            update_fn(details);
             Ok(())
         } else {
-            Err(ConfigError::ConfigKeyNotFound(config_key.to_string()))
+            Err(ConfigError::ConfigKeyNotFound(key.to_string()))
         }
+    }
+    pub fn update_command(&mut self, key: &str, command: &str) -> Result<(), ConfigError> {
+        self.update_command_details(key, |details| details.command = Some(command.to_string()))?;
+        Ok(())
+    }
+
+    pub fn update_allow_multiple_instances(
+        &mut self,
+        key: &str,
+        allow: bool,
+    ) -> Result<(), ConfigError> {
+        self.update_command_details(key, |details| {
+            details.allow_multiple_instances = Some(allow)
+        })?;
+        Ok(())
+    }
+
+    pub fn update_working_directory(&mut self, key: &str, cwd: &str) -> Result<(), ConfigError> {
+        self.update_command_details(key, |details| {
+            details.working_directory = Some(cwd.to_string())
+        })?;
+        Ok(())
+    }
+    pub fn update_pre_command(&mut self, key: &str, pre_command: &str) -> Result<(), ConfigError> {
+        // Check if trying to set pre_command to its own key
+        if pre_command == key {
+            return Err(ConfigError::InvalidPreCommand(format!(
+                "Cannot set pre_command to its own key: {}",
+                key
+            )));
+        }
+
+        // Allow clearing the pre_command by setting an empty string
+        if pre_command.is_empty() {
+            self.update_command_details(key, |details| details.pre_command = None)?;
+            return Ok(());
+        }
+
+        // Ensure the pre_command refers to an existing command key (excluding self-check above)
+        if !self.configs.contains_key(pre_command) {
+            return Err(ConfigError::InvalidPreCommand(format!(
+                "pre_command '{}' does not exist as a command key",
+                pre_command
+            )));
+        }
+
+        // Proceed to update the pre_command since it passed all checks
+        self.update_command_details(key, |details| {
+            details.pre_command = Some(pre_command.to_string())
+        })?;
+
+        Ok(())
+    }
+
+    pub fn update_command_type(
+        &mut self,
+        key: &str,
+        command_type: CommandType,
+    ) -> Result<(), ConfigError> {
+        self.update_command_details(key, |details| {
+            details.command_type = command_type.clone();
+        })?;
+
+        Ok(())
+    }
+
+    pub fn update_params(&mut self, config_key: &str, new_params: &str) -> Result<(), ConfigError> {
+        self.update_command_details(config_key, |details| {
+            details.params = Some(new_params.to_string())
+        })?;
+
+        Ok(())
     }
 
     pub fn with_context(context: &str) -> Self {
@@ -162,8 +237,8 @@ impl CommandConfig {
         }
     }
 
-    pub fn update_config(&mut self, key: String, details: CommandDetails) {
-        self.configs.insert(key, details);
+    pub fn update_config(&mut self, key: &str, details: CommandDetails) {
+        self.configs.insert(key.to_string(), details);
     }
 
     pub fn remove_config(&mut self, key: &str) {
