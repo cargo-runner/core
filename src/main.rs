@@ -1,7 +1,4 @@
-use std::{
-    error::Error,
-    path::{Path, PathBuf},
-};
+use std::{error::Error, path::PathBuf};
 
 use rx::{
     config::{CommandContext, Config},
@@ -22,6 +19,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             .commands
             .get_command_config(CommandContext::Run, "leptos")
     );
+
+    config.save(None)?;
 
     Ok(())
 }
