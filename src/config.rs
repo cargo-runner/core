@@ -1,58 +1,20 @@
-use serde::de::{self, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
 use std::error::Error;
-use std::fmt;
 use std::path::PathBuf;
 use toml;
 
-use crate::global::{
-    CONFIGURATION_FILE_CONTENT, DEFAULT_BENCH_CONFIG, DEFAULT_BUILD_CONFIG, DEFAULT_CONFIG_PATH,
-    DEFAULT_RUN_CONFIG, DEFAULT_SCRIPT_CONFIG, DEFAULT_TEST_CONFIG,
-};
+use crate::global::{CONFIGURATION_FILE_CONTENT, DEFAULT_CONFIG_PATH};
 use crate::helper::{read_file, write_to_config_file};
 
-#[derive(Debug, Serialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
 pub enum CommandContext {
     Run,
     Test,
     Build,
     Bench,
-    #[default]
     Script,
-}
-
-impl<'de> Deserialize<'de> for CommandContext {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        struct CommandContextVisitor;
-
-        impl<'de> Visitor<'de> for CommandContextVisitor {
-            type Value = CommandContext;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("a string for a command context")
-            }
-
-            fn visit_str<E>(self, value: &str) -> Result<CommandContext, E>
-            where
-                E: de::Error,
-            {
-                let context = match value.to_lowercase().as_str() {
-                    "run" => CommandContext::Run,
-                    "test" => CommandContext::Test,
-                    "build" => CommandContext::Build,
-                    "bench" => CommandContext::Bench,
-                    _ => CommandContext::Script,
-                };
-                Ok(context)
-            }
-        }
-
-        deserializer.deserialize_str(CommandContextVisitor)
-    }
 }
 
 #[derive(Debug, Serialize, Clone, Default)]
@@ -126,20 +88,14 @@ pub struct Commands {
 }
 
 impl Commands {
-    pub fn get_command_config<'a>(
-        &'a self,
-        command_context: CommandContext,
-        config_name: &str,
-    ) -> Option<&'a CommandDetails> {
-        let command_config = match command_context {
-            CommandContext::Run => self.run.as_ref().or_else(|| DEFAULT_RUN_CONFIG.get()),
-            CommandContext::Test => self.test.as_ref().or_else(|| DEFAULT_TEST_CONFIG.get()),
-            CommandContext::Build => self.build.as_ref().or_else(|| DEFAULT_BUILD_CONFIG.get()),
-            CommandContext::Bench => self.bench.as_ref().or_else(|| DEFAULT_BENCH_CONFIG.get()),
-            CommandContext::Script => self.script.as_ref().or_else(|| DEFAULT_SCRIPT_CONFIG.get()),
-        };
-
-        command_config.and_then(|config| config.configs.get(config_name))
+    pub fn get_or_insert_command_config(&mut self, context: CommandContext) -> &mut CommandConfig {
+        match context {
+            CommandContext::Run => self.run.get_or_insert_with(CommandConfig::default),
+            CommandContext::Test => self.test.get_or_insert_with(CommandConfig::default),
+            CommandContext::Build => self.build.get_or_insert_with(CommandConfig::default),
+            CommandContext::Bench => self.bench.get_or_insert_with(CommandConfig::default),
+            CommandContext::Script => self.script.get_or_insert_with(CommandConfig::default),
+        }
     }
 }
 
