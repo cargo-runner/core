@@ -12,8 +12,8 @@ pub struct CommandDetailsBuilder {
     command: String,
     params: String,
     env: HashMap<String, String>,
-    allow_multiple_instances: Option<bool>,
-    working_directory: Option<String>,
+    allow_multiple_instances: bool,
+    working_directory: String,
     pre_command: BTreeSet<String>,
     validators: Vec<Box<dyn ValidateCommandDetails>>,
 }
@@ -27,7 +27,7 @@ impl CommandDetailsBuilder {
         Self {
             command_type,
             command: command.to_string(),
-            working_directory: Some("${workspaceFolder}".to_string()),
+            working_directory: "${workspaceFolder}".to_string(),
             ..Default::default()
         }
     }
@@ -53,12 +53,12 @@ impl CommandDetailsBuilder {
     }
 
     pub fn allow_multiple_instances(mut self, allow_multiple_instances: bool) -> Self {
-        self.allow_multiple_instances = Some(allow_multiple_instances);
+        self.allow_multiple_instances = allow_multiple_instances;
         self
     }
 
     pub fn working_directory(mut self, working_directory: &str) -> Self {
-        self.working_directory = Some(working_directory.to_string());
+        self.working_directory = working_directory.to_string();
         self
     }
 
@@ -70,7 +70,7 @@ impl CommandDetailsBuilder {
     pub fn build(self) -> Result<CommandDetails, ConfigError> {
         let command_details = CommandDetails {
             command_type: self.command_type,
-            command: Some(self.command),
+            command: self.command,
             params: self.params,
             env: self.env,
             allow_multiple_instances: self.allow_multiple_instances,
