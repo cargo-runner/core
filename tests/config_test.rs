@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use rx::{
-        builders::config::CommandDetailsBuilder,
+        builders::config::ConfigBuilder,
         helpers::init_config,
         models::config::{CommandContext, CommandType, Config},
     };
@@ -186,12 +186,17 @@ pre_command = []
 
         let config_key = "leptos";
 
-        let new_details = CommandDetailsBuilder::new(CommandType::Cargo, "leptos watch")
+        let context = CommandContext::Script;
+
+        let new_details = ConfigBuilder::new(context)
+            .command_type(CommandType::Shell)
+            .command("cargo leptos")
+            .params("watch")
             .build()
             .unwrap();
 
         // Update the configuration for 'Run' context with new details
-        let run_config = config.commands.get_or_default_config(CommandContext::Run);
+        let run_config = config.commands.get_or_default_config(context);
         run_config.update_config(config_key, new_details);
 
         // Save the updated configuration
@@ -206,10 +211,10 @@ pre_command = []
 
         // Assert that the updated details are present
         assert!(
-            reloaded_config.commands.run.is_some(),
+            reloaded_config.commands.script.is_some(),
             "Run configuration should exist"
         );
-        let reloaded_run_config = reloaded_config.commands.run.unwrap();
+        let reloaded_run_config = reloaded_config.commands.script.unwrap();
         assert!(
             reloaded_run_config.configs.contains_key(config_key),
             "Config key 'leptos' should be present in the run configs"
@@ -220,7 +225,7 @@ pre_command = []
             .get(config_key)
             .expect("Config key 'leptos' was not found after update");
         assert_eq!(
-            updated_details.command, "leptos watch",
+            updated_details.command, "cargo leptos",
             "Command for 'leptos' config key did not match expected value"
         );
     }
@@ -230,13 +235,18 @@ pre_command = []
         let (mut config, config_path, _temp_dir) = setup(None);
 
         let config_key = "leptos";
-        let details = CommandDetailsBuilder::new(CommandType::Cargo, "cargo watch")
+
+        let context = CommandContext::Script;
+
+        let details = ConfigBuilder::new(context)
+            .command_type(CommandType::Shell)
+            .command("cargo watch")
             .build()
             .unwrap();
 
         // add leptos to configs
         {
-            let run_config = config.commands.get_or_default_config(CommandContext::Run);
+            let run_config = config.commands.get_or_default_config(context);
             run_config.update_config(config_key, details);
         }
 
@@ -246,7 +256,7 @@ pre_command = []
             assert!(
                 config
                     .commands
-                    .set_default_config(CommandContext::Run, config_key)
+                    .set_default_config(context, config_key)
                     .is_ok(),
                 "Setting default config failed"
             );
@@ -254,7 +264,7 @@ pre_command = []
 
         // Now, remove the 'leptos' config key
         {
-            let run_config = config.commands.get_or_default_config(CommandContext::Run);
+            let run_config = config.commands.get_or_default_config(context);
 
             run_config.remove_config(config_key);
         }
