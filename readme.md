@@ -23,3 +23,4 @@
 - [X] `Config` instance can `save` after modifying `Config`
 - [X] `Config` can `load` config file on init of the app
 - [X] `ConfigError` is used when `Error` on `Config` happends
+- [X] Create Default Config file on `$HOME/.config/cargo_runner/config.toml`
