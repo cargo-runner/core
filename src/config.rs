@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::error::Error;
 use std::path::PathBuf;
 use toml;
@@ -74,6 +74,31 @@ pub struct Commands {
 }
 
 impl Commands {
+    pub fn get_configs(&self, context: CommandContext) -> Vec<String> {
+        match context {
+            CommandContext::Run => self
+                .run
+                .as_ref()
+                .map_or(vec![], |config| config.configs.keys().cloned().collect()),
+            CommandContext::Test => self
+                .test
+                .as_ref()
+                .map_or(vec![], |config| config.configs.keys().cloned().collect()),
+            CommandContext::Build => self
+                .build
+                .as_ref()
+                .map_or(vec![], |config| config.configs.keys().cloned().collect()),
+            CommandContext::Bench => self
+                .bench
+                .as_ref()
+                .map_or(vec![], |config| config.configs.keys().cloned().collect()),
+            CommandContext::Script => self
+                .script
+                .as_ref()
+                .map_or(vec![], |config| config.configs.keys().cloned().collect()),
+        }
+    }
+
     pub fn get_or_insert_command_config(&mut self, context: CommandContext) -> &mut CommandConfig {
         match context {
             CommandContext::Run => self.run.get_or_insert_with(CommandConfig::default),
@@ -127,93 +152,9 @@ impl CommandConfig {
             params: Some("".to_string()),
             allow_multiple_instances: Some(false),
             working_directory: Some("${workspaceFolder}".to_string()),
-            pre_command: Some("".to_string()),
-            env: Some(HashMap::new()),
+            pre_command: BTreeSet::new(),
+            env: HashMap::new(),
         }
-    }
-
-    fn update_command_details<F>(&mut self, key: &str, mut update_fn: F) -> Result<(), ConfigError>
-    where
-        F: FnMut(&mut CommandDetails),
-    {
-        if let Some(details) = self.configs.get_mut(key) {
-            update_fn(details);
-            Ok(())
-        } else {
-            Err(ConfigError::ConfigKeyNotFound(key.to_string()))
-        }
-    }
-    pub fn update_command(&mut self, key: &str, command: &str) -> Result<(), ConfigError> {
-        self.update_command_details(key, |details| details.command = Some(command.to_string()))?;
-        Ok(())
-    }
-
-    pub fn update_allow_multiple_instances(
-        &mut self,
-        key: &str,
-        allow: bool,
-    ) -> Result<(), ConfigError> {
-        self.update_command_details(key, |details| {
-            details.allow_multiple_instances = Some(allow)
-        })?;
-        Ok(())
-    }
-
-    pub fn update_working_directory(&mut self, key: &str, cwd: &str) -> Result<(), ConfigError> {
-        self.update_command_details(key, |details| {
-            details.working_directory = Some(cwd.to_string())
-        })?;
-        Ok(())
-    }
-    pub fn update_pre_command(&mut self, key: &str, pre_command: &str) -> Result<(), ConfigError> {
-        // Check if trying to set pre_command to its own key
-        if pre_command == key {
-            return Err(ConfigError::InvalidPreCommand(format!(
-                "Cannot set pre_command to its own key: {}",
-                key
-            )));
-        }
-
-        // Allow clearing the pre_command by setting an empty string
-        if pre_command.is_empty() {
-            self.update_command_details(key, |details| details.pre_command = None)?;
-            return Ok(());
-        }
-
-        // Ensure the pre_command refers to an existing command key (excluding self-check above)
-        if !self.configs.contains_key(pre_command) {
-            return Err(ConfigError::InvalidPreCommand(format!(
-                "pre_command '{}' does not exist as a command key",
-                pre_command
-            )));
-        }
-
-        // Proceed to update the pre_command since it passed all checks
-        self.update_command_details(key, |details| {
-            details.pre_command = Some(pre_command.to_string())
-        })?;
-
-        Ok(())
-    }
-
-    pub fn update_command_type(
-        &mut self,
-        key: &str,
-        command_type: CommandType,
-    ) -> Result<(), ConfigError> {
-        self.update_command_details(key, |details| {
-            details.command_type = command_type.clone();
-        })?;
-
-        Ok(())
-    }
-
-    pub fn update_params(&mut self, config_key: &str, new_params: &str) -> Result<(), ConfigError> {
-        self.update_command_details(config_key, |details| {
-            details.params = Some(new_params.to_string())
-        })?;
-
-        Ok(())
     }
 
     pub fn with_context(context: &str) -> Self {
@@ -225,7 +166,7 @@ impl CommandConfig {
             "test" => Self::default_command_details("test", CommandType::Cargo),
             "build" => Self::default_command_details("build", CommandType::Cargo),
             "bench" => Self::default_command_details("bench", CommandType::Cargo),
-            _ => Self::default_command_details("", CommandType::Shell),
+            _ => Self::default_command_details("script", CommandType::Shell),
         };
 
         let mut configs = HashMap::new();
@@ -288,8 +229,8 @@ pub struct CommandDetails {
     pub command_type: CommandType,
     pub command: Option<String>,
     pub params: Option<String>,
-    pub env: Option<HashMap<String, String>>,
+    pub env: HashMap<String, String>,
     pub allow_multiple_instances: Option<bool>,
     pub working_directory: Option<String>,
-    pub pre_command: Option<String>,
+    pub pre_command: BTreeSet<String>,
 }

@@ -1,16 +1,20 @@
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 
-use crate::config::{CommandDetails, CommandType};
+use crate::{
+    config::{CommandDetails, CommandType},
+    errors::ConfigError,
+    types::CommandDetailsValidation,
+};
 
 #[derive(Debug, Clone, Default)]
 pub struct CommandDetailsBuilder {
     command_type: CommandType,
     command: String,
     params: Option<String>,
-    env: Option<HashMap<String, String>>,
+    env: HashMap<String, String>,
     allow_multiple_instances: Option<bool>,
     working_directory: Option<String>,
-    pre_command: Option<String>,
+    pre_command: BTreeSet<String>,
 }
 
 impl CommandDetailsBuilder {
@@ -18,11 +22,8 @@ impl CommandDetailsBuilder {
         Self {
             command_type,
             command: command.to_string(),
-            params: Some("".to_string()),
-            env: Some(HashMap::new()),
-            allow_multiple_instances: Some(false),
             working_directory: Some("${workspaceFolder}".to_string()),
-            pre_command: Some("".to_string()),
+            ..Default::default()
         }
     }
 
@@ -42,7 +43,7 @@ impl CommandDetailsBuilder {
     }
 
     pub fn env(mut self, env: HashMap<String, String>) -> Self {
-        self.env = Some(env);
+        self.env = env;
         self
     }
 
@@ -56,14 +57,16 @@ impl CommandDetailsBuilder {
         self
     }
 
-    pub fn pre_command(mut self, pre_command: &str) -> Self {
-        self.pre_command = Some(pre_command.to_string());
+    pub fn pre_command(mut self, pre_command: BTreeSet<String>) -> Self {
+        self.pre_command = pre_command;
         self
     }
 
-    // Finalize and construct a CommandDetails instance
-    pub fn build(self) -> CommandDetails {
-        CommandDetails {
+    pub fn build(
+        self,
+        validations: Vec<CommandDetailsValidation>,
+    ) -> Result<CommandDetails, ConfigError> {
+        let command_details = CommandDetails {
             command_type: self.command_type,
             command: Some(self.command),
             params: self.params,
@@ -71,6 +74,12 @@ impl CommandDetailsBuilder {
             allow_multiple_instances: self.allow_multiple_instances,
             working_directory: self.working_directory,
             pre_command: self.pre_command,
+        };
+
+        for validate in validations {
+            validate(&command_details)?;
         }
+
+        Ok(command_details)
     }
 }
