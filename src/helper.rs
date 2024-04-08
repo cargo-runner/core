@@ -55,3 +55,20 @@ pub fn init_config(default_path: PathBuf) {
     let _ = DEFAULT_BENCH_CONFIG.set(CommandConfig::with_context("bench"));
     let _ = DEFAULT_SCRIPT_CONFIG.set(CommandConfig::with_context("script"));
 }
+
+pub fn is_all_caps(s: &str) -> bool {
+    s.chars().all(|c| !c.is_alphabetic() || c.is_uppercase())
+}
+
+pub fn is_valid_env_var_name(name: &str) -> bool {
+    let mut chars = name.chars();
+
+    // Check if the first character is an uppercase letter
+    match chars.next() {
+        Some(first_char) => first_char.is_ascii_uppercase(),
+        None => return false, // The name is empty, so it's invalid
+    };
+
+    // Check the rest of the characters
+    chars.all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_')
+}
