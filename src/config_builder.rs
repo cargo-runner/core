@@ -10,7 +10,7 @@ use crate::{
 pub struct CommandDetailsBuilder {
     command_type: CommandType,
     command: String,
-    params: Option<String>,
+    params: String,
     env: HashMap<String, String>,
     allow_multiple_instances: Option<bool>,
     working_directory: Option<String>,
@@ -43,7 +43,7 @@ impl CommandDetailsBuilder {
     }
 
     pub fn params(mut self, params: &str) -> Self {
-        self.params = Some(params.to_string());
+        self.params = params.to_string();
         self
     }
 
