@@ -8,7 +8,7 @@ use rx::{
     config::{CommandContext, CommandDetails, CommandType, Config},
     config_builder::CommandDetailsBuilder,
     errors::ConfigError,
-    helper::{
+    helpers::{
         default_config_path, ensure_config_directory_and_file, init_config, is_valid_env_var_name,
     },
     validator::Validator,

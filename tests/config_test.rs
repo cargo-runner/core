@@ -3,7 +3,7 @@ mod tests {
     use rx::{
         config::{CommandContext, CommandType, Config},
         config_builder::CommandDetailsBuilder,
-        helper::init_config,
+        helpers::init_config,
     };
     use std::{fs, path::PathBuf};
     use tempfile::TempDir;
