@@ -1,3 +1,4 @@
+use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap};
 use std::error::Error;
@@ -149,7 +150,7 @@ impl CommandConfig {
         CommandDetails {
             command_type,
             command: Some(command.to_string()),
-            params: Some("".to_string()),
+            params: "".to_string(),
             allow_multiple_instances: Some(false),
             working_directory: Some("${workspaceFolder}".to_string()),
             pre_command: BTreeSet::new(),
@@ -228,9 +229,28 @@ pub struct CommandDetails {
     #[serde(rename = "type")]
     pub command_type: CommandType,
     pub command: Option<String>,
-    pub params: Option<String>,
+    pub params: String,
+    #[serde(serialize_with = "serialize_env")]
     pub env: HashMap<String, String>,
     pub allow_multiple_instances: Option<bool>,
     pub working_directory: Option<String>,
     pub pre_command: BTreeSet<String>,
+}
+
+fn serialize_env<S>(env: &HashMap<String, String>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let mut map = serializer.serialize_map(Some(env.len()))?;
+    for (k, v) in env {
+        if let Ok(bool_val) = v.parse::<bool>() {
+            map.serialize_entry(k, &bool_val)?;
+        } else if let Ok(int_val) = v.parse::<i64>() {
+            map.serialize_entry(k, &int_val)?;
+        } else {
+            // Fallback to string if it's neither bool nor int
+            map.serialize_entry(k, v)?;
+        }
+    }
+    map.end()
 }
