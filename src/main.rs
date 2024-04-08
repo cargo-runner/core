@@ -5,11 +5,12 @@ use rx::{
     config_builder::CommandDetailsBuilder,
     errors::ConfigError,
     helper::init_config,
-    types::CommandDetailsValidation,
+    validator::Validator,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let path_str = "rx.toml";
+
     let default_config_path = PathBuf::from(path_str);
 
     init_config(default_config_path.clone());
@@ -18,27 +19,37 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let pre_commands: BTreeSet<String> = ["leptos"].into_iter().map(String::from).collect();
 
-    let valid_pre_command_keys = config.commands.get_configs(CommandContext::Run);
-    let validate_pre_commands: CommandDetailsValidation =
-        Box::new(move |details: &CommandDetails| {
-            for pre_command in &details.pre_command {
-                if !valid_pre_command_keys.contains(pre_command) {
-                    return Err(ConfigError::InvalidPreCommand(format!(
-                        "Invalid pre-command: '{}'. Must be one of: [{}]",
-                        pre_command,
-                        valid_pre_command_keys.join(",")
-                    )));
-                }
-            }
-            Ok(())
-        });
+    let config_key = "leptos";
 
-    let run_command_details = CommandDetailsBuilder::new(CommandType::Cargo, "leptos")
+    let valid_pre_command_keys = config.commands.get_configs(CommandContext::Run);
+
+    let pre_command_validator = Validator(move |details: &CommandDetails| {
+        if details.pre_command.contains(config_key) {
+            return Err(ConfigError::InvalidPreCommand(format!(
+                "You cannot use {} as a pre_command",
+                config_key
+            )));
+        }
+        for pre_command in &details.pre_command {
+            if !valid_pre_command_keys.contains(pre_command) {
+                return Err(ConfigError::InvalidPreCommand(format!(
+                    "Pre-command must be any of the following: [{}]",
+                    valid_pre_command_keys.join(",")
+                )));
+            }
+        }
+
+        Ok(())
+    });
+
+    let command = "leptos";
+
+    let run_command_details = CommandDetailsBuilder::new(CommandType::Cargo, command)
+        .command("leptos")
         .pre_command(pre_commands)
         .params("watch")
-        .build(vec![validate_pre_commands])?;
-
-    let config_key = "leptos";
+        .add_validator(pre_command_validator)
+        .build()?;
 
     let run_config = config
         .commands
