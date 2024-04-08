@@ -7,9 +7,22 @@ command = "run --package ${packageName} --bin ${binaryName}"
 params = ""
 allow_multiple_instances = false
 working_directory = "${workspaceFolder}"
-pre_command = ""
+pre_command = []
 
 [commands.run.configs.default.env]
+
+[commands.run.configs.leptos]
+type = "cargo"
+command = "leptos"
+params = "watch"
+allow_multiple_instances = false
+working_directory = "${workspaceFolder}"
+pre_command = ["default"]
+
+[commands.run.configs.leptos.env]
+APP_NAME = "Cargo Runner"
+MY_CUSTOM_VAR_1 = "TRUE"
+COPY_TRAIT = "FALSE"
 
 [commands.test]
 default = "default"
@@ -20,7 +33,7 @@ command = "test"
 params = ""
 allow_multiple_instances = false
 working_directory = "${workspaceFolder}"
-pre_command = ""
+pre_command = []
 
 [commands.test.configs.default.env]
 
@@ -33,7 +46,7 @@ command = "build"
 params = ""
 allow_multiple_instances = false
 working_directory = "${workspaceFolder}"
-pre_command = ""
+pre_command = []
 
 [commands.build.configs.default.env]
 
@@ -46,6 +59,6 @@ command = "bench"
 params = ""
 allow_multiple_instances = false
 working_directory = "${workspaceFolder}"
-pre_command = ""
+pre_command = []
 
 [commands.bench.configs.default.env]
