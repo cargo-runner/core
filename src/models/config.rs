@@ -9,7 +9,7 @@ use crate::errors::ConfigError;
 use crate::global::{CONFIGURATION_FILE_CONTENT, DEFAULT_CONFIG_PATH};
 use crate::helpers::{read_file, write_to_config_file};
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Copy)]
 #[serde(rename_all = "lowercase")]
 pub enum CommandContext {
     Run,
@@ -22,8 +22,8 @@ pub enum CommandContext {
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum CommandType {
-    Cargo,
     #[default]
+    Cargo,
     Shell,
 }
 
