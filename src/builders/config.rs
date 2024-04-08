@@ -2,12 +2,12 @@ use std::collections::{BTreeSet, HashMap};
 
 use crate::{
     errors::ConfigError,
-    models::config::{CommandDetails, CommandType},
+    models::config::{CommandContext, CommandDetails, CommandType},
     validator::ValidateCommandDetails,
 };
 
 #[derive(Default)]
-pub struct CommandDetailsBuilder {
+pub struct ConfigBuilder {
     command_type: CommandType,
     command: String,
     params: String,
@@ -18,17 +18,43 @@ pub struct CommandDetailsBuilder {
     validators: Vec<Box<dyn ValidateCommandDetails>>,
 }
 
-impl CommandDetailsBuilder {
+impl ConfigBuilder {
     pub fn add_validator<T: ValidateCommandDetails + 'static>(mut self, validator: T) -> Self {
         self.validators.push(Box::new(validator));
         self
     }
-    pub fn new(command_type: CommandType, command: &str) -> Self {
-        Self {
-            command_type,
-            command: command.to_string(),
-            working_directory: "${workspaceFolder}".to_string(),
-            ..Default::default()
+
+    pub fn new(context: CommandContext) -> Self {
+        match context {
+            CommandContext::Run => Self {
+                command_type: CommandType::Cargo,
+                command: String::from("run --package ${packageName} --bin ${binaryName}"),
+                working_directory: "${workspaceFolder}".to_string(),
+                ..Default::default()
+            },
+            CommandContext::Test => Self {
+                command_type: CommandType::Cargo,
+                command: String::from("test"),
+                working_directory: "${workspaceFolder}".to_string(),
+                ..Default::default()
+            },
+            CommandContext::Build => Self {
+                command_type: CommandType::Cargo,
+                command: String::from("build"),
+                working_directory: "${workspaceFolder}".to_string(),
+                ..Default::default()
+            },
+            CommandContext::Bench => Self {
+                command_type: CommandType::Cargo,
+                command: String::from("bench"),
+                working_directory: "${workspaceFolder}".to_string(),
+                ..Default::default()
+            },
+            CommandContext::Script => Self {
+                command_type: CommandType::Shell,
+                working_directory: "${workspaceFolder}".to_string(),
+                ..Default::default()
+            },
         }
     }
 
