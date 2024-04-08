@@ -1,17 +1,16 @@
 use std::{
     collections::{BTreeSet, HashMap},
     error::Error,
-    fs::OpenOptions,
-    io::Write,
     path::PathBuf,
 };
 
-use dirs::home_dir;
 use rx::{
     config::{CommandContext, CommandDetails, CommandType, Config},
     config_builder::CommandDetailsBuilder,
     errors::ConfigError,
-    helper::{init_config, is_valid_env_var_name},
+    helper::{
+        default_config_path, ensure_config_directory_and_file, init_config, is_valid_env_var_name,
+    },
     validator::Validator,
 };
 
@@ -77,30 +76,6 @@ fn get_config_path() -> PathBuf {
         .map(PathBuf::from)
         .unwrap_or_else(default_config_path)
 }
-fn default_config_path() -> PathBuf {
-    home_dir()
-        .expect("Could not find home directory")
-        .join(".config/cargo_runner/config.toml")
-}
-fn ensure_config_directory_and_file(path: &PathBuf) {
-    if !path.exists() {
-        if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent).expect("Failed to create configuration directory");
-        }
-        create_default_config_file(path);
-    }
-}
-fn create_default_config_file(path: &PathBuf) {
-    let mut file = OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(path)
-        .expect("Failed to create default configuration file");
-
-    let default_config = Config::default();
-    let toml = toml::to_string(&default_config).expect("Failed to serialize default configuration");
-    writeln!(file, "{}", toml).expect("Failed to write default configuration");
-}
 
 fn fetch_params<'a>() -> Result<
     (
@@ -114,7 +89,7 @@ fn fetch_params<'a>() -> Result<
     Box<dyn Error>,
 > {
     let config_path = get_config_path();
-    ensure_config_directory_and_file(&config_path);
+    ensure_config_directory_and_file(&config_path)?;
 
     let pre_commands: BTreeSet<String> = ["default"].into_iter().map(String::from).collect();
 
