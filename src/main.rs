@@ -73,10 +73,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .add_validator(env_validator)
         .build()?;
 
-    let run_config = config
-        .commands
-        .get_or_insert_command_config(CommandContext::Run);
+    let run_config = config.commands.get_or_default_config(CommandContext::Run);
+
     run_config.update_config(config_key, run_command_details);
+    // If setting the newly created config as default then set_default_config
+    // should be invoke after update_config for that CommandDetailsBuilder was set
+    config
+        .commands
+        .set_default_config(CommandContext::Run, config_key)?;
 
     config.save(Some(default_config_path))?;
 

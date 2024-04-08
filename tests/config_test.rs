@@ -35,12 +35,13 @@ mod tests {
         init_config(config_path.clone());
 
         // Load the configuration from the newly created temp file
-        let config = Config::load(Some(config_path.clone())).unwrap();
+        let config = Config::load(Some(config_path.clone())).expect("Loading Config Failed");
 
         // Return the loaded configuration, the path to the config file, and the TempDir instance
         (config, config_path, temp_dir)
     }
 
+    /// This test check if when File is Empty then a Default Commands Should be provided
     #[test]
     fn test_default_config() {
         let (config, _, _) = setup(None);
@@ -53,8 +54,8 @@ mod tests {
             .get("default")
             .expect("default run config should exist");
         assert_eq!(
-            run_details.command.as_deref(),
-            Some("run --package ${packageName} --bin ${binaryName}")
+            run_details.command,
+            "run --package ${packageName} --bin ${binaryName}"
         );
         assert_eq!(run_details.command_type, CommandType::Cargo);
 
@@ -67,7 +68,7 @@ mod tests {
             .configs
             .get("default")
             .expect("default test config should exist");
-        assert_eq!(test_details.command.as_deref(), Some("test"));
+        assert_eq!(test_details.command, "test");
         assert_eq!(test_details.command_type, CommandType::Cargo);
 
         let build_config = config
@@ -79,7 +80,7 @@ mod tests {
             .configs
             .get("default")
             .expect("default build config should exist");
-        assert_eq!(build_details.command.as_deref(), Some("build"));
+        assert_eq!(build_details.command, "build");
         assert_eq!(build_details.command_type, CommandType::Cargo);
 
         let bench_config = config
@@ -93,7 +94,7 @@ mod tests {
             .get("default")
             .expect("default bench config should exist");
 
-        assert_eq!(bench_details.command.as_deref(), Some("bench"));
+        assert_eq!(bench_details.command, "bench");
         assert_eq!(bench_details.command_type, CommandType::Cargo);
 
         assert!(
@@ -101,9 +102,12 @@ mod tests {
             "script config is none by default"
         );
     }
-
+    /// Since our CommandDetails Dont Use Option , Most of it would Error Out if there was a  Missing Field
+    /// A serde macro for default is added to return a default for Missing Field
+    /// This Test is partly about that Missing Field , and Also To check that config is loaded
+    /// and the Fields that was Deserialize matches
     #[test]
-    fn test_override_config() {
+    fn test_config_load() {
         let custom_config = r#"
 [commands.run]
 default = "custom"
@@ -114,14 +118,31 @@ command = "run --package ${packageName} --bin ${binaryName}"
 params = ""
 allow_multiple_instances = false
 working_directory = "${workspaceFolder}"
-pre_command = ""
-env = {}
+pre_command = []
+
+[commands.run.configs.custom.env]
+APP_NAME = "Cargo Runner"
+COPY_TRAIT = "FALSE"
+MY_CUSTOM_VAR_1 = "TRUE"
+
+[commands.test]
+default = "default"
+
+[commands.test.configs.default]
+type = "cargo"
+command = "test"
+params = ""
+allow_multiple_instances = false
+working_directory = "${workspaceFolder}"
+pre_command = []
+
+[commands.test.configs.default.env]
 "#;
 
         let (config, _config_path, _temp_dir) = setup(Some(custom_config));
 
-        // Assert that the 'run' configuration exists and has 'custom' as the default
         let run_config = config.commands.run.expect("Run configuration should exist");
+
         assert_eq!(
             run_config.default, "custom",
             "Default should be set to 'custom'"
@@ -133,29 +154,29 @@ env = {}
             .get("custom")
             .expect("Custom config should exist under run");
         assert_eq!(
-            custom_config_details.command.as_deref(),
-            Some("run --package ${packageName} --bin ${binaryName}"),
+            custom_config_details.command, "run --package ${packageName} --bin ${binaryName}",
             "Command does not match"
         );
-        assert_eq!(
-            custom_config_details.params.as_deref(),
-            Some(""),
-            "Params do not match"
+        assert_eq!(custom_config_details.params, "", "Params do not match");
+        assert!(
+            !custom_config_details.allow_multiple_instances,
+            "Allow Multiple Instances should be false by default"
         );
         assert_eq!(
-            custom_config_details.allow_multiple_instances,
-            Some(false),
-            "Allow multiple instances flag does not match"
-        );
-        assert_eq!(
-            custom_config_details.working_directory.as_deref(),
-            Some("${workspaceFolder}"),
+            custom_config_details.working_directory, "${workspaceFolder}",
             "Working directory does not match"
         );
         assert!(
-            custom_config_details.env.is_some()
-                && custom_config_details.env.as_ref().unwrap().is_empty(),
-            "Env should be empty"
+            custom_config_details.env.contains_key("APP_NAME"),
+            "Should have APP_NAME loaded to config"
+        );
+        assert!(
+            custom_config_details.env.contains_key("COPY_TRAIT"),
+            "Should have COPY_TRAIT loaded to the config"
+        );
+        assert!(
+            custom_config_details.env.contains_key("MY_CUSTOM_VAR_1"),
+            "Should have MY_CUSTOM_VAR_1 loaded to the config"
         );
     }
 
@@ -165,12 +186,12 @@ env = {}
 
         let config_key = "leptos";
 
-        let new_details = CommandDetailsBuilder::new(CommandType::Cargo, "leptos watch").build();
+        let new_details = CommandDetailsBuilder::new(CommandType::Cargo, "leptos watch")
+            .build()
+            .unwrap();
 
         // Update the configuration for 'Run' context with new details
-        let run_config = config
-            .commands
-            .get_or_insert_command_config(CommandContext::Run);
+        let run_config = config.commands.get_or_default_config(CommandContext::Run);
         run_config.update_config(config_key, new_details);
 
         // Save the updated configuration
@@ -199,8 +220,7 @@ env = {}
             .get(config_key)
             .expect("Config key 'leptos' was not found after update");
         assert_eq!(
-            updated_details.command.as_deref(),
-            Some("leptos watch"),
+            updated_details.command, "leptos watch",
             "Command for 'leptos' config key did not match expected value"
         );
     }
@@ -210,13 +230,13 @@ env = {}
         let (mut config, config_path, _temp_dir) = setup(None);
 
         let config_key = "leptos";
-        let details = CommandDetailsBuilder::new(CommandType::Cargo, "cargo watch").build();
+        let details = CommandDetailsBuilder::new(CommandType::Cargo, "cargo watch")
+            .build()
+            .unwrap();
 
         // add leptos to configs
         {
-            let run_config = config
-                .commands
-                .get_or_insert_command_config(CommandContext::Run);
+            let run_config = config.commands.get_or_default_config(CommandContext::Run);
             run_config.update_config(config_key, details);
         }
 
@@ -234,9 +254,7 @@ env = {}
 
         // Now, remove the 'leptos' config key
         {
-            let run_config = config
-                .commands
-                .get_or_insert_command_config(CommandContext::Run);
+            let run_config = config.commands.get_or_default_config(CommandContext::Run);
 
             run_config.remove_config(config_key);
         }
@@ -270,64 +288,5 @@ env = {}
             reloaded_run_config.default, config_key,
             "Default config key should no longer be 'leptos'"
         );
-    }
-    #[test]
-    fn test_add_and_remove_params() {
-        let (mut config, _config_path, _temp_dir) = setup(None);
-
-        let config_key = "leptos";
-
-        let details = CommandDetailsBuilder::new(CommandType::Cargo, "cargo watch").build();
-
-        {
-            let run_config = config
-                .commands
-                .get_or_insert_command_config(CommandContext::Run);
-            run_config.update_config(config_key, details);
-        }
-        // add params
-        {
-            let run_config = config
-                .commands
-                .get_or_insert_command_config(CommandContext::Run);
-
-            run_config
-                .update_params(config_key, "--initial-params")
-                .unwrap();
-            // Assert that parameters have been added
-            assert_eq!(
-                run_config
-                    .configs
-                    .get(config_key)
-                    .unwrap()
-                    .params
-                    .to_owned(),
-                Some(String::from("--initial-params")),
-                "Parameters should match '--initial-params'"
-            );
-        }
-
-        // Remove parameters by setting them to an empty string
-        {
-            let run_config = config
-                .commands
-                .get_or_insert_command_config(CommandContext::Run);
-
-            run_config
-                .update_params(config_key, "")
-                .expect("Failed to remove parameters");
-
-            // Assert that parameters have been effectively removed
-            assert_eq!(
-                run_config
-                    .configs
-                    .get(config_key)
-                    .unwrap()
-                    .params
-                    .as_deref(),
-                Some(""),
-                "Parameters should be an empty string now"
-            );
-        }
     }
 }

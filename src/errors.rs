@@ -2,6 +2,7 @@ use std::fmt::{self, Display};
 
 #[derive(Debug)]
 pub enum ConfigError {
+    MissingConfigFields(String),
     ConfigKeyNotFound(String),
     InvalidPreCommand(String),
     InvalidEnvFormat,
@@ -11,6 +12,9 @@ pub enum ConfigError {
 impl Display for ConfigError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            ConfigError::MissingConfigFields(str) => {
+                write!(f, "Missing Config Fields: {}", str)
+            }
             ConfigError::ConfigKeyNotFound(key) => {
                 write!(f, "The config key '{}' does not exist.", key)
             }
