@@ -5,12 +5,12 @@ use std::{
 };
 
 use rx::{
-    config::{CommandContext, CommandDetails, CommandType, Config},
-    config_builder::CommandDetailsBuilder,
+    builders::config::CommandDetailsBuilder,
     errors::ConfigError,
     helpers::{
         default_config_path, ensure_config_directory_and_file, init_config, is_valid_env_var_name,
     },
+    models::config::{CommandContext, CommandDetails, CommandType, Config},
     validator::Validator,
 };
 
@@ -70,6 +70,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
 fn get_config_path() -> PathBuf {
     std::env::args()
         .nth(1)
@@ -77,6 +78,7 @@ fn get_config_path() -> PathBuf {
         .unwrap_or_else(default_config_path)
 }
 
+#[allow(warnings)]
 fn fetch_params<'a>() -> Result<
     (
         PathBuf,

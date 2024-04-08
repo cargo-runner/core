@@ -5,7 +5,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::config::CommandConfig;
+use crate::models::config::CommandConfig;
 
 lazy_static! {
     pub static ref CONFIGURATION_FILE_CONTENT: Arc<Mutex<String>> =

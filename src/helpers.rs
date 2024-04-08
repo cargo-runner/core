@@ -8,11 +8,11 @@ use std::{
 use dirs::home_dir;
 
 use crate::{
-    config::{CommandConfig, Config},
     global::{
         CONFIGURATION_FILE_CONTENT, DEFAULT_BENCH_CONFIG, DEFAULT_BUILD_CONFIG,
         DEFAULT_CONFIG_PATH, DEFAULT_RUN_CONFIG, DEFAULT_SCRIPT_CONFIG, DEFAULT_TEST_CONFIG,
     },
+    models::config::{CommandConfig, Config},
 };
 
 fn append_new_line(data: &str) {

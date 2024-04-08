@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod tests {
     use rx::{
-        config::{CommandContext, CommandType, Config},
-        config_builder::CommandDetailsBuilder,
+        builders::config::CommandDetailsBuilder,
         helpers::init_config,
+        models::config::{CommandContext, CommandType, Config},
     };
     use std::{fs, path::PathBuf};
     use tempfile::TempDir;
