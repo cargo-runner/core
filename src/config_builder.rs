@@ -3,10 +3,10 @@ use std::collections::{BTreeSet, HashMap};
 use crate::{
     config::{CommandDetails, CommandType},
     errors::ConfigError,
-    types::CommandDetailsValidation,
+    validator::ValidateCommandDetails,
 };
 
-#[derive(Debug, Clone, Default)]
+#[derive(Default)]
 pub struct CommandDetailsBuilder {
     command_type: CommandType,
     command: String,
@@ -15,9 +15,14 @@ pub struct CommandDetailsBuilder {
     allow_multiple_instances: Option<bool>,
     working_directory: Option<String>,
     pre_command: BTreeSet<String>,
+    validators: Vec<Box<dyn ValidateCommandDetails>>,
 }
 
 impl CommandDetailsBuilder {
+    pub fn add_validator<T: ValidateCommandDetails + 'static>(mut self, validator: T) -> Self {
+        self.validators.push(Box::new(validator));
+        self
+    }
     pub fn new(command_type: CommandType, command: &str) -> Self {
         Self {
             command_type,
@@ -62,10 +67,7 @@ impl CommandDetailsBuilder {
         self
     }
 
-    pub fn build(
-        self,
-        validations: Vec<CommandDetailsValidation>,
-    ) -> Result<CommandDetails, ConfigError> {
+    pub fn build(self) -> Result<CommandDetails, ConfigError> {
         let command_details = CommandDetails {
             command_type: self.command_type,
             command: Some(self.command),
@@ -76,8 +78,8 @@ impl CommandDetailsBuilder {
             pre_command: self.pre_command,
         };
 
-        for validate in validations {
-            validate(&command_details)?;
+        for validator in self.validators {
+            validator.validate(&command_details)?;
         }
 
         Ok(command_details)
