@@ -5,12 +5,12 @@ use std::{
 };
 
 use rx::{
-    builders::config::CommandDetailsBuilder,
+    builders::config::ConfigBuilder,
     errors::ConfigError,
     helpers::{
         default_config_path, ensure_config_directory_and_file, init_config, is_valid_env_var_name,
     },
-    models::config::{CommandContext, CommandDetails, CommandType, Config},
+    models::config::{CommandContext, CommandDetails, Config},
     validator::Validator,
 };
 
@@ -50,7 +50,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Ok(())
     });
 
-    let run_command_details = CommandDetailsBuilder::new(CommandType::Cargo, command)
+    let context = CommandContext::Run;
+
+    let run_command_details = ConfigBuilder::new(context)
+        .command(command)
         .pre_command(pre_commands)
         .env(env)
         .params(params)
@@ -58,7 +61,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .add_validator(env_validator)
         .build()?;
 
-    let run_config = config.commands.get_or_default_config(CommandContext::Run);
+    let run_config = config.commands.get_or_default_config(context);
 
     run_config.update_config(config_key, run_command_details);
 
