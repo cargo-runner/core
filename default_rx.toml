@@ -11,19 +11,6 @@ pre_command = []
 
 [commands.run.configs.default.env]
 
-[commands.run.configs.leptos]
-type = "cargo"
-command = "leptos"
-params = "watch"
-allow_multiple_instances = false
-working_directory = "${workspaceFolder}"
-pre_command = ["default"]
-
-[commands.run.configs.leptos.env]
-APP_NAME = "Cargo Runner"
-MY_CUSTOM_VAR_1 = "TRUE"
-COPY_TRAIT = "FALSE"
-
 [commands.test]
 default = "default"
 
