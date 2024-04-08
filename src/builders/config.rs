@@ -1,8 +1,8 @@
 use std::collections::{BTreeSet, HashMap};
 
 use crate::{
-    config::{CommandDetails, CommandType},
     errors::ConfigError,
+    models::config::{CommandDetails, CommandType},
     validator::ValidateCommandDetails,
 };
 
