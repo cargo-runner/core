@@ -1,10 +1,13 @@
-use std::{collections::BTreeSet, path::PathBuf};
+use std::{
+    collections::{BTreeSet, HashMap},
+    path::PathBuf,
+};
 
 use rx::{
     config::{CommandContext, CommandDetails, CommandType, Config},
     config_builder::CommandDetailsBuilder,
     errors::ConfigError,
-    helper::init_config,
+    helper::{init_config, is_valid_env_var_name},
     validator::Validator,
 };
 
@@ -17,7 +20,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut config: Config = Config::load(Some(default_config_path.clone()))?;
 
-    let pre_commands: BTreeSet<String> = ["leptos"].into_iter().map(String::from).collect();
+    let pre_commands: BTreeSet<String> = ["default"].into_iter().map(String::from).collect();
 
     let config_key = "leptos";
 
@@ -42,13 +45,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Ok(())
     });
 
+    let env_validator = Validator(move |details| {
+        for key in details.env.keys() {
+            if !is_valid_env_var_name(key) {
+                return Err(ConfigError::InvalidEnvFormat);
+            }
+        }
+        Ok(())
+    });
+
     let command = "leptos";
+    let env: HashMap<String, String> = [
+        ("APP_NAME", "Cargo Runner"),
+        ("MY_CUSTOM_VAR_1", "TRUE"),
+        ("COPY_TRAIT", "FALSE"),
+    ]
+    .iter()
+    .map(|(k, v)| (String::from(*k), String::from(*v)))
+    .collect();
 
     let run_command_details = CommandDetailsBuilder::new(CommandType::Cargo, command)
         .command("leptos")
         .pre_command(pre_commands)
-        .params("watch")
+        .env(env)
+        .params("-- this is the last watch")
         .add_validator(pre_command_validator)
+        .add_validator(env_validator)
         .build()?;
 
     let run_config = config
