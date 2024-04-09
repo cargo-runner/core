@@ -6,11 +6,11 @@ pub trait ValidateCommandDetails {
 
 pub struct Validator<F>(pub F)
 where
-    F: Fn(&CommandDetails) -> Result<(), ConfigError> + 'static;
+    F: for<'a> Fn(&'a CommandDetails) -> Result<(), ConfigError>;
 
 impl<F> ValidateCommandDetails for Validator<F>
 where
-    F: Fn(&CommandDetails) -> Result<(), ConfigError> + 'static,
+    F: for<'a> Fn(&'a CommandDetails) -> Result<(), ConfigError>,
 {
     fn validate(&self, details: &CommandDetails) -> Result<(), ConfigError> {
         (self.0)(details)

@@ -7,7 +7,7 @@ use crate::{
 };
 
 #[derive(Default)]
-pub struct ConfigBuilder {
+pub struct ConfigBuilder<'a> {
     command_type: CommandType,
     command: String,
     params: String,
@@ -15,11 +15,11 @@ pub struct ConfigBuilder {
     allow_multiple_instances: bool,
     working_directory: String,
     pre_command: BTreeSet<String>,
-    validators: Vec<Box<dyn ValidateCommandDetails>>,
+    validators: Vec<Box<dyn ValidateCommandDetails + 'a>>,
 }
 
-impl ConfigBuilder {
-    pub fn add_validator<T: ValidateCommandDetails + 'static>(mut self, validator: T) -> Self {
+impl<'a> ConfigBuilder<'a> {
+    pub fn add_validator<T: ValidateCommandDetails + 'a>(mut self, validator: T) -> Self {
         self.validators.push(Box::new(validator));
         self
     }
