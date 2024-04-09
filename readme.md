@@ -1,8 +1,9 @@
 # Cargo Runner
 
-# Changelog
+## Changelog
 
 ## April 08, 2024
+
 - [X] `Commands` Have Ability to Add Zero or More `CommandConfig`
 - [X] `Commands` can `get_configs(CommandContext)`
 - [X] `ConfigBuilder` on `new` must require `command` and `command_type`
@@ -22,5 +23,5 @@
 - [X] Ensure Config Deserialization for empty field and file by setting defaults with serde macro
 - [X] `Config` instance can `save` after modifying `Config`
 - [X] `Config` can `load` config file on init of the app
-- [X] `ConfigError` is used when `Error` on `Config` happends
+- [X] `ConfigError` is used when `Error` on `Config` happens
 - [X] Create Default Config file on `$HOME/.config/cargo_runner/config.toml`
