@@ -19,7 +19,7 @@ pub enum CommandContext {
     Script,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, PartialOrd)]
 #[serde(rename_all = "lowercase")]
 pub enum CommandType {
     #[default]
@@ -151,12 +151,12 @@ impl Commands {
                 config.default = new_default_key.to_string();
                 Ok(())
             } else {
-                Err(Box::new(ConfigError::ConfigKeyNotFound(
+                Err(Box::new(ConfigError::ConfigKey(
                     new_default_key.to_string(),
                 )))
             }
         } else {
-            Err(Box::new(ConfigError::ConfigKeyNotFound(
+            Err(Box::new(ConfigError::ConfigKey(
                 new_default_key.to_string(),
             )))
         }
