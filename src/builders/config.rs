@@ -2,26 +2,47 @@ use std::collections::{BTreeSet, HashMap};
 
 use crate::{
     errors::ConfigError,
-    models::config::{CommandContext, CommandDetails, CommandType},
-    validator::ValidateCommandDetails,
+    models::config::{CommandContext, CommandDetails, CommandType, Config},
+    validator::Validate,
 };
 
 #[derive(Default)]
 pub struct ConfigBuilder {
-    command_type: CommandType,
-    command: String,
-    params: String,
-    env: HashMap<String, String>,
-    allow_multiple_instances: bool,
-    working_directory: String,
-    pre_command: BTreeSet<String>,
-    validators: Vec<Box<dyn ValidateCommandDetails>>,
+    pub config_key: String,
+    pub command_type: CommandType,
+    pub command: String,
+    pub params: String,
+    pub env: HashMap<String, String>,
+    pub allow_multiple_instances: bool,
+    pub working_directory: String,
+    pub pre_command: BTreeSet<String>,
+    validators: Vec<Validate>,
 }
 
 impl ConfigBuilder {
-    pub fn add_validator<T: ValidateCommandDetails + 'static>(mut self, validator: T) -> Self {
-        self.validators.push(Box::new(validator));
+    pub fn add_validator(mut self, validator: Validate) -> Self {
+        self.validators.push(validator);
         self
+    }
+
+    pub fn from(context: CommandContext, config: &mut Config, config_key: &str) -> Self {
+        let command = config.commands.get_or_default_config(context);
+        let config = command
+            .configs
+            .get(config_key).unwrap_or(&CommandDetails::default()).clone();
+            
+            return Self {
+                config_key: config_key.to_string(),
+                command_type: config.command_type,
+                command: config.command,
+                params: config.params,
+                env: config.env,
+                allow_multiple_instances: config.allow_multiple_instances,
+                working_directory: config.working_directory,
+                pre_command: config.pre_command,
+                validators: vec![],
+            };
+        //Self::new(context)
     }
 
     pub fn new(context: CommandContext) -> Self {
@@ -63,6 +84,11 @@ impl ConfigBuilder {
         self
     }
 
+    pub fn config_key(mut self, config_key: &str) -> Self {
+        self.config_key = config_key.to_string();
+        self
+    }
+
     pub fn command(mut self, command: &str) -> Self {
         self.command = command.to_string();
         self
@@ -93,7 +119,11 @@ impl ConfigBuilder {
         self
     }
 
-    pub fn build(self) -> Result<CommandDetails, ConfigError> {
+    pub fn build(self, config: &Config) -> Result<CommandDetails, ConfigError> {
+        for validator in &self.validators {
+            validator.validate(&config, &self)?;
+        }
+
         let command_details = CommandDetails {
             command_type: self.command_type,
             command: self.command,
@@ -103,10 +133,6 @@ impl ConfigBuilder {
             working_directory: self.working_directory,
             pre_command: self.pre_command,
         };
-
-        for validator in self.validators {
-            validator.validate(&command_details)?;
-        }
 
         Ok(command_details)
     }
