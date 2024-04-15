@@ -192,7 +192,7 @@ pre_command = []
             .command_type(CommandType::Shell)
             .command("cargo leptos")
             .params("watch")
-            .build()
+            .build(&config)
             .unwrap();
 
         // Update the configuration for 'Run' context with new details
@@ -241,7 +241,7 @@ pre_command = []
         let details = ConfigBuilder::new(context)
             .command_type(CommandType::Shell)
             .command("cargo watch")
-            .build()
+            .build(&config)
             .unwrap();
 
         // add leptos to configs
