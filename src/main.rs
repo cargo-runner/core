@@ -6,12 +6,9 @@ use std::{
 
 use rx::{
     builders::config::ConfigBuilder,
-    errors::ConfigError,
-    helpers::{
-        default_config_path, ensure_config_directory_and_file, init_config, is_valid_env_var_name,
-    },
-    models::config::{CommandContext, CommandDetails, Config},
-    validator::Validator,
+    helpers::{default_config_path, ensure_config_directory_and_file, init_config},
+    models::config::{CommandContext, Config},
+    validator::{command_type_validator, command_validator, pre_command_validator},
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -21,45 +18,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut config: Config = Config::load(Some(config_path.clone()))?;
 
-    let valid_pre_command_keys = config.commands.get_configs(CommandContext::Run);
-
-    let pre_command_validator = Validator(move |details: &CommandDetails| {
-        if details.pre_command.contains(config_key) {
-            return Err(ConfigError::InvalidPreCommand(format!(
-                "You cannot use {} as a pre_command",
-                config_key
-            )));
-        }
-        for pre_command in &details.pre_command {
-            if !valid_pre_command_keys.contains(pre_command) {
-                return Err(ConfigError::InvalidPreCommand(format!(
-                    "Pre-command must be any of the following: [{}]",
-                    valid_pre_command_keys.join(",")
-                )));
-            }
-        }
-        Ok(())
-    });
-
-    let env_validator = Validator(move |details| {
-        for key in details.env.keys() {
-            if !is_valid_env_var_name(key) {
-                return Err(ConfigError::InvalidEnvFormat);
-            }
-        }
-        Ok(())
-    });
-
     let context = CommandContext::Run;
 
+ 
+
     let run_command_details = ConfigBuilder::new(context)
+        .config_key(config_key)
         .command(command)
         .pre_command(pre_commands)
         .env(env)
         .params(params)
-        .add_validator(pre_command_validator)
-        .add_validator(env_validator)
-        .build()?;
+        .add_validator(pre_command_validator())
+        .add_validator(command_validator())
+        .add_validator(command_type_validator())
+        .build(&config)?;
 
     let run_config = config.commands.get_or_default_config(context);
 
@@ -67,7 +39,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     config
         .commands
-        .set_default_config(CommandContext::Run, config_key)?;
+        .set_default_config(context, config_key)?;
 
     config.save(Some(config_path))?;
 
