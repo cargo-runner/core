@@ -2,24 +2,24 @@ use std::fmt::{self, Display};
 
 #[derive(Debug)]
 pub enum ConfigError {
-    MissingConfigFields(String),
-    ConfigKeyNotFound(String),
-    InvalidPreCommand(String),
-    InvalidEnvFormat,
+    ConfigKey(String),
+    PreCommand(String),
+    Env(String),
+    CommandKey(String),
+    CommandType(String),
     // You can add more error variants as needed
 }
 
 impl Display for ConfigError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            ConfigError::MissingConfigFields(str) => {
-                write!(f, "Missing Config Fields: {}", str)
-            }
-            ConfigError::ConfigKeyNotFound(key) => {
+            ConfigError::ConfigKey(key) => {
                 write!(f, "The config key '{}' does not exist.", key)
             }
-            ConfigError::InvalidPreCommand(msg) => write!(f, "{}", msg),
-            ConfigError::InvalidEnvFormat => write!(f, "ENV define is not ALL_CAPS"),
+            ConfigError::PreCommand(msg) => write!(f, "{}", msg),
+            ConfigError::Env(msg) => write!(f, "{}", msg),
+            ConfigError::CommandKey(msg) => write!(f, "{}", msg),
+            ConfigError::CommandType(msg) => write!(f,"{}",msg),
         }
     }
 }
