@@ -1,8 +1,8 @@
-*/target
+target
 */dist
 */out/
 .DS_Store
-*/node_modules/
+node_modules/
 *.db
 *.tsbuildinfo
 *.bak
