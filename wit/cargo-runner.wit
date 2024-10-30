@@ -1,0 +1,21 @@
+package vscode:extensions;
+
+interface types {
+
+	enum operation {
+		add,
+		sub,
+		mul,
+		div
+	}
+
+	resource engine {
+		constructor();
+		push-operand: func(operand: u32);
+		push-operation: func(operation: operation);
+		execute: func() -> u32;
+	}
+}
+world cargo-runner {
+	export types;
+}
