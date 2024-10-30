@@ -1,6 +1,6 @@
 target
-*/dist
-*/out/
+dist/
+out/
 .DS_Store
 node_modules/
 *.db
