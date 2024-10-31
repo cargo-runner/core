@@ -9,7 +9,7 @@ use cargo_runner::{
     helpers::{
         default_config_path, ensure_config_directory_and_file, init_config, is_valid_env_var_name,
     },
-    models::{ CommandDetails, CommandType, Config,CargoContext},
+    models::{ CommandDetails, CommandType, Config,ContextType},
     validator::Validator,
     CargoConfigBuilder
 };
@@ -22,7 +22,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut config: Config = Config::load(Some(config_path.clone()))?;
 
-    let configs_keys = config.context.get_configs(CargoContext::Run);
+    let configs_keys = config.context.get_configs(ContextType::Run);
     eprintln!("configs_keys: {:?}", configs_keys);
 
     let sub_command_validator = Validator(move |details: &CommandDetails| {
@@ -45,7 +45,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     let command_type = CommandType::Command("dx".to_string());
-    let context = CargoContext::Run;
+    let context = ContextType::Run;
 
     let run_command_details = CargoConfigBuilder::new(command_type.clone(), context)
         .command(String::from(command_type).as_str())
@@ -64,7 +64,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     config
         .context
-        .set_default_config(CargoContext::Run, config_key)?;
+        .set_default_config(ContextType::Run, config_key)?;
 
     config.save(Some(config_path))?;
 

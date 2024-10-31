@@ -4,7 +4,7 @@ mod tests {
 
     use cargo_runner::{
         helpers::init_config,
-        models::{ CargoContext, CommandType, Config},
+        models::{ ContextType, CommandType, Config},
         CargoConfigBuilder
     };
     use rand::Rng;
@@ -171,7 +171,7 @@ allowed_subcommands = []
 
         let config_key = "leptos";
 
-        let context = CargoContext::Run;
+        let context = ContextType::Run;
 
         let command_type = CommandType::SubCommand;
 
@@ -224,7 +224,7 @@ allowed_subcommands = []
 
         let config_key = "leptos";
 
-        let context = CargoContext::Run;
+        let context = ContextType::Run;
 
         let command_type = CommandType::SubCommand;
 

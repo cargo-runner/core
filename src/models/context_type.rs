@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Copy, Default)]
 #[serde(rename_all = "lowercase")]
-pub enum CargoContext {
+pub enum ContextType {
     #[default]
     Run,
     Test,
@@ -11,13 +11,13 @@ pub enum CargoContext {
     Bench,
 }
 
-impl CargoContext {
+impl ContextType {
     pub fn sub_command(&self) -> String {
         match self {
-            CargoContext::Run => "run".to_string(),
-            CargoContext::Test => "test".to_string(),
-            CargoContext::Build => "build".to_string(),
-            CargoContext::Bench => "bench".to_string(),
+            ContextType::Run => "run".to_string(),
+            ContextType::Test => "test".to_string(),
+            ContextType::Build => "build".to_string(),
+            ContextType::Bench => "bench".to_string(),
         }
     }
 

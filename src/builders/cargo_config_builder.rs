@@ -2,7 +2,7 @@ use std::collections::{BTreeSet, HashMap};
 
 use crate::{
     errors::ConfigError,
-    models::{CargoContext, CommandDetails, CommandType},
+    models::{ContextType, CommandDetails, CommandType},
     validator::ValidateCommandDetails,
 };
 
@@ -27,30 +27,30 @@ impl CargoConfigBuilder {
         self
     }
 
-    pub fn new(command_type: CommandType, context: CargoContext) -> Self {
+    pub fn new(command_type: CommandType, context: ContextType) -> Self {
         match context {
-            CargoContext::Run => Self {
+            ContextType::Run => Self {
                 command_type: command_type.clone(),
                 command: command_type.into(),
-                sub_command: CargoContext::Run.sub_command(),
+                sub_command: ContextType::Run.sub_command(),
                 ..Default::default()
             },
-            CargoContext::Test => Self {
+            ContextType::Test => Self {
                 command_type: command_type.clone(),
                 command: command_type.into(),
-                sub_command: CargoContext::Test.sub_command(),
+                sub_command: ContextType::Test.sub_command(),
                 ..Default::default()
             },
-            CargoContext::Build => Self {
+            ContextType::Build => Self {
                 command_type: command_type.clone(),
                 command: command_type.into(),
-                sub_command: CargoContext::Build.sub_command(),
+                sub_command: ContextType::Build.sub_command(),
                 ..Default::default()
             },
-            CargoContext::Bench => Self {
+            ContextType::Bench => Self {
                 command_type: command_type.clone(),
                 command: command_type.into(),
-                sub_command: CargoContext::Bench.sub_command(),
+                sub_command: ContextType::Bench.sub_command(),
                 ..Default::default()
             },
         }

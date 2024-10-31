@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 
-use super::{CargoContext, CommandDetails, CommandType};
+use super::{ContextType, CommandDetails, CommandType};
 
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
@@ -36,30 +36,30 @@ impl CommandConfig {
         }
     }
 
-    pub fn with_context(context: CargoContext) -> Self {
+    pub fn with_context(context: ContextType) -> Self {
         let default_details = match context {
-            CargoContext::Run => Self::default_command_details(
+            ContextType::Run => Self::default_command_details(
                 CommandType::Cargo,
                 String::from("cargo"),
                 context.sub_command(),
                 String::new(),
                 String::new(),
             ),
-            CargoContext::Test => Self::default_command_details(
+            ContextType::Test => Self::default_command_details(
                 CommandType::Cargo,
                 String::from("cargo"),
                 context.sub_command(),
                 String::new(),
                 String::new(),
             ),
-            CargoContext::Build => Self::default_command_details(
+            ContextType::Build => Self::default_command_details(
                 CommandType::Cargo,
                 String::from("cargo"),
                 context.sub_command(),
                 String::new(),
                 String::new(),
             ),
-            CargoContext::Bench => Self::default_command_details(
+            ContextType::Bench => Self::default_command_details(
                 CommandType::Cargo,
                 String::from("cargo"),
                 context.sub_command(),

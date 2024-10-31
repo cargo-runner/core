@@ -12,7 +12,7 @@ use crate::{
         CONFIGURATION_FILE_CONTENT, DEFAULT_BENCH_CONFIG, DEFAULT_BUILD_CONFIG,
         DEFAULT_CONFIG_PATH, DEFAULT_RUN_CONFIG,  DEFAULT_TEST_CONFIG,
     },
-    models::{CommandConfig,  Config, CargoContext}
+    models::{CommandConfig,  Config, ContextType}
 };
 
 fn append_new_line(data: &str) {
@@ -51,10 +51,10 @@ pub fn write_to_config_file(path: &Path, content: &str) -> Result<(), Box<dyn Er
 
 pub fn init_config(default_path: PathBuf) {
     let _ = DEFAULT_CONFIG_PATH.set(default_path);
-    let _ = DEFAULT_RUN_CONFIG.set(CommandConfig::with_context(CargoContext::Run));
-    let _ = DEFAULT_TEST_CONFIG.set(CommandConfig::with_context(CargoContext::Test));
-    let _ = DEFAULT_BUILD_CONFIG.set(CommandConfig::with_context(CargoContext::Build));
-    let _ = DEFAULT_BENCH_CONFIG.set(CommandConfig::with_context(CargoContext::Bench));
+    let _ = DEFAULT_RUN_CONFIG.set(CommandConfig::with_context(ContextType::Run));
+    let _ = DEFAULT_TEST_CONFIG.set(CommandConfig::with_context(ContextType::Test));
+    let _ = DEFAULT_BUILD_CONFIG.set(CommandConfig::with_context(ContextType::Build));
+    let _ = DEFAULT_BENCH_CONFIG.set(CommandConfig::with_context(ContextType::Bench));
 }
 
 pub fn is_all_caps(s: &str) -> bool {

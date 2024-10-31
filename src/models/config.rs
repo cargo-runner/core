@@ -6,7 +6,7 @@ use toml;
 use crate::global::{CONFIGURATION_FILE_CONTENT, DEFAULT_CONFIG_PATH};
 use crate::helpers::{read_file, write_to_config_file};
 
-use super::{CargoContext, CommandConfig, Context};
+use super::{ContextType, CommandConfig, Context};
 
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq)]
@@ -17,10 +17,10 @@ pub struct Config {
 
 fn default_config_on_empty_file() -> Context {
     Context {
-        run: Some(CommandConfig::with_context(CargoContext::Run)),
-        test: Some(CommandConfig::with_context(CargoContext::Test)),
-        build: Some(CommandConfig::with_context(CargoContext::Build)),
-        bench: Some(CommandConfig::with_context(CargoContext::Bench)),
+        run: Some(CommandConfig::with_context(ContextType::Run)),
+        test: Some(CommandConfig::with_context(ContextType::Test)),
+        build: Some(CommandConfig::with_context(ContextType::Build)),
+        bench: Some(CommandConfig::with_context(ContextType::Bench)),
     }
 }
 
