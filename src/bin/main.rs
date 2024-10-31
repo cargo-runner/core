@@ -1,131 +1,81 @@
-use std::{
-    collections::{BTreeSet, HashMap},
-    error::Error,
-    path::PathBuf,
-};
+use std::collections::HashMap;
+use std::fs::File;
+use std::io::Write;
+use cargo_runner::models::{CommandConfig, CommandType, Config};
 
-use cargo_runner::{
-    errors::ConfigError,
-    helpers::{
-        default_config_path, ensure_config_directory_and_file, init_config, is_valid_env_var_name,
-    },
-    models::{ CommandDetails, CommandType, Config,ContextType},
-    validator::Validator,
-    CargoConfigBuilder
-};
+fn main() -> std::io::Result<()> {
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let (config_path, config_key, sub_command, sub_action, params, env, allowed_subcommands) =
-        fetch_params()?;
+    let run_config = vec![
+        CommandConfig {
+            name: "default".to_string(),
+            command_type: CommandType::Cargo,
+            command: "cargo".to_string(),
+            sub_command: "run".to_string(),
+            allowed_subcommands: vec![],
+            env: HashMap::new(),
+        },
+        CommandConfig {
+            name: "leptos".to_string(),
+            command_type: CommandType::SubCommand,
+            command: "cargo".to_string(),
+            sub_command: "leptos".to_string(),
+            allowed_subcommands: vec![],
+            env: HashMap::new()
+        },
+        CommandConfig {
+            name: "dx".to_string(),
+            command_type: CommandType::Shell("dx".into()),
+            command: "dx".to_string(),
+            sub_command: "build".to_string(),
+            allowed_subcommands: vec![
+                "build".to_string(), "bundle".to_string(), "check".to_string(), "clean".to_string(), "config".to_string(), "fmt".to_string(), "init".to_string(), "new".to_string(), "serve".to_string(), "translate".to_string(),
+            ],
+            env: HashMap::new(),
+        },
+    ];
 
-    init_config(config_path.clone());
+    let mut test_env = HashMap::new();
+    test_env.insert("RUSTFLAGS".to_string(), "-Awarnings".to_string());
 
-    let mut config: Config = Config::load(Some(config_path.clone()))?;
+    let test_config = vec![CommandConfig {
+        name: "default".to_string(),
+        command_type: CommandType::Cargo,
+        command: "cargo".to_string(),
+        sub_command: "test".to_string(),
+        allowed_subcommands: vec![],
+        env: test_env,
+    }];
 
-    let configs_keys = config.context.get_configs(ContextType::Run);
-    eprintln!("configs_keys: {:?}", configs_keys);
+    let build_config = vec![CommandConfig {
+        name: "default".to_string(),
+        command_type: CommandType::Cargo,
+        command: "cargo".to_string(),
+        sub_command: "build".to_string(),
+        allowed_subcommands: vec![],
+        env: HashMap::new(),
+    }];
 
-    let sub_command_validator = Validator(move |details: &CommandDetails| {
-        if !details.allowed_subcommands.contains(sub_command) {
-            return Err(ConfigError::InvalidSubCommand(format!(
-                "You cannot use {} as a sub_command",
-                sub_command
-            )));
-        }
-        Ok(())
-    });
+    let bench_config = vec![CommandConfig {
+        name: "default".to_string(),
+        command_type: CommandType::Cargo,
+        command: "cargo".to_string(),
+        sub_command: "bench".to_string(),
+        allowed_subcommands: vec![],
+        env: HashMap::new(),
+    }];
 
-    let env_validator = Validator(move |details| {
-        for key in details.env.keys() {
-            if !is_valid_env_var_name(key) {
-                return Err(ConfigError::InvalidEnvFormat);
-            }
-        }
-        Ok(())
-    });
+    let config = Config {
+        run: run_config,
+        test: test_config,
+        build: build_config,
+        bench: bench_config,
+    };
 
-    let command_type = CommandType::Command("dx".to_string());
-    let context = ContextType::Run;
+    let toml_string = toml::to_string(&config).expect("Failed to serialize to TOML");
 
-    let run_command_details = CargoConfigBuilder::new(command_type.clone(), context)
-        .command(String::from(command_type).as_str())
-        .sub_command(sub_command)
-        .sub_action(sub_action)
-        .allowed_subcommands(allowed_subcommands)
-        .env(env)
-        .params(params)
-        .add_validator(sub_command_validator)
-        .add_validator(env_validator)
-        .build()?;
+    let mut file = File::create("cargo-runner.toml")?;
+    file.write_all(toml_string.as_bytes())?;
 
-    let run_config = config.context.get_or_default_config(context);
-
-    run_config.update_config(config_key, run_command_details);
-
-    config
-        .context
-        .set_default_config(ContextType::Run, config_key)?;
-
-    config.save(Some(config_path))?;
-
+    println!("Configuration written to cargo-runner.toml");
     Ok(())
-}
-
-fn get_config_path() -> PathBuf {
-    std::env::args()
-        .nth(1)
-        .map(PathBuf::from)
-        .unwrap_or_else(default_config_path)
-}
-
-#[allow(warnings)]
-fn fetch_params<'a>() -> Result<
-    (
-        PathBuf,
-        &'a str,
-        &'a str,
-        &'a str,
-        &'a str,
-        HashMap<String, String>,
-        BTreeSet<String>,
-    ),
-    Box<dyn Error>,
-> {
-    let config_path = get_config_path();
-    ensure_config_directory_and_file(&config_path)?;
-
-    let allowed_subcommands: BTreeSet<String> = [
-        "build",
-        "translate",
-        "serve",
-        "new",
-        "init",
-        "clean",
-        "bundle",
-        "fmt",
-        "check",
-        "config",
-    ]
-    .into_iter()
-    .map(String::from)
-    .collect();
-
-    let config_key = "dx";
-    let sub_command = "build";
-    let sub_action = "";
-    let params = "";
-
-    let env: HashMap<String, String> = [("WARNINGS", "TRUE")]
-        .iter()
-        .map(|(k, v)| (String::from(*k), String::from(*v)))
-        .collect();
-    Ok((
-        config_path,
-        config_key,
-        sub_command,
-        sub_action,
-        params,
-        env,
-        allowed_subcommands,
-    ))
 }
