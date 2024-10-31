@@ -26,7 +26,7 @@ fn main() -> std::io::Result<()> {
             name: "dx".to_string(),
             command_type: CommandType::Shell("dx".into()),
             command: "dx".to_string(),
-            sub_command: "build".to_string(),
+            sub_command: "serve".to_string(),
             allowed_subcommands: vec![
                 "build".to_string(), "bundle".to_string(), "check".to_string(), "clean".to_string(), "config".to_string(), "fmt".to_string(), "init".to_string(), "new".to_string(), "serve".to_string(), "translate".to_string(),
             ],
