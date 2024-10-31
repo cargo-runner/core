@@ -5,16 +5,16 @@ use crate::errors::ConfigError;
 use super::{ContextType, CommandConfig};
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
-pub struct Context {
+pub struct CargoContext {
     pub run: Option<CommandConfig>,
     pub test: Option<CommandConfig>,
     pub build: Option<CommandConfig>,
     pub bench: Option<CommandConfig>,
 }
 
-impl Default for Context {
+impl Default for CargoContext {
     fn default() -> Self {
-        Context {
+        CargoContext {
             run: Some(CommandConfig::with_context(ContextType::Run)),
             test: Some(CommandConfig::with_context(ContextType::Test)),
             build: Some(CommandConfig::with_context(ContextType::Build)),
@@ -23,7 +23,7 @@ impl Default for Context {
     }
 }
 
-impl Context {
+impl CargoContext {
     pub fn get_configs(&self, context: ContextType) -> Vec<String> {
         match context {
             ContextType::Run => self
