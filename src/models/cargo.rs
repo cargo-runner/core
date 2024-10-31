@@ -10,7 +10,7 @@ use super::{CargoContext, CommandConfig, Context};
 
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq)]
-pub struct Config {
+pub struct Cargo {
     #[serde(default = "default_config_on_empty_file")]
     pub context: Context,
 }
@@ -24,8 +24,8 @@ fn default_config_on_empty_file() -> Context {
     }
 }
 
-impl Config {
-    pub fn load(path: Option<PathBuf>) -> Result<Config, Box<dyn Error>> {
+impl Cargo {
+    pub fn load(path: Option<PathBuf>) -> Result<Cargo, Box<dyn Error>> {
         if let Some(file_path) = path {
             read_file(file_path.as_path())?;
         } else {
@@ -34,7 +34,7 @@ impl Config {
 
         let file_content = CONFIGURATION_FILE_CONTENT.lock().unwrap();
 
-        let config: Config = toml::from_str(&file_content)?;
+        let config: Cargo = toml::from_str(&file_content)?;
 
         Ok(config)
     }

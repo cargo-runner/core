@@ -12,7 +12,7 @@ use crate::{
         CONFIGURATION_FILE_CONTENT, DEFAULT_BENCH_CONFIG, DEFAULT_BUILD_CONFIG,
         DEFAULT_CONFIG_PATH, DEFAULT_RUN_CONFIG,  DEFAULT_TEST_CONFIG,
     },
-    models::{CommandConfig,  Config, CargoContext}
+    models::{CommandConfig,  Cargo, CargoContext}
 };
 
 fn append_new_line(data: &str) {
@@ -89,7 +89,7 @@ pub fn ensure_config_directory_and_file(path: &Path) -> Result<(), Box<dyn std::
     Ok(())
 }
 pub fn create_default_config_file(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
-    let default_config = Config::default();
+    let default_config = Cargo::default();
     let toml = toml::to_string(&default_config)?;
     write_to_config_file(path, &toml)?;
     Ok(())

@@ -1,4 +1,4 @@
-mod config;
+mod cargo;
 mod cargo_context;
 mod command_type;
 mod command_details;
@@ -11,4 +11,4 @@ pub use command_config::CommandConfig;
 pub use cargo_context::CargoContext;
 pub use context::Context;
 
-pub use config::Config;
+pub use cargo::Cargo;
