@@ -9,7 +9,7 @@ use cargo_runner::{
     helpers::{
         default_config_path, ensure_config_directory_and_file, init_config, is_valid_env_var_name,
     },
-    models::{ CommandDetails, CommandType, Cargo,CargoContext},
+    models::{ CommandDetails, CommandType, Config,CargoContext},
     validator::Validator,
     CargoConfigBuilder
 };
@@ -20,8 +20,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     init_config(config_path.clone());
 
-    let mut config: Cargo = Cargo::load(Some(config_path.clone()))?;
-
+    let mut config: Config = Config::load(Some(config_path.clone()))?;
 
     let configs_keys = config.context.get_configs(CargoContext::Run);
     eprintln!("configs_keys: {:?}", configs_keys);

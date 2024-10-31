@@ -4,7 +4,7 @@ mod tests {
 
     use cargo_runner::{
         helpers::init_config,
-        models::{ CargoContext, CommandType, Cargo},
+        models::{ CargoContext, CommandType, Config},
         CargoConfigBuilder
     };
     use rand::Rng;
@@ -24,7 +24,7 @@ mod tests {
     ///
     /// The [TempDir] must be drop manually at the last line of the function so the file path wont be
     /// destroyed and thus avoiding error FileNotFound
-    fn setup(custom_config: Option<&str>) -> (Cargo, PathBuf, TempDir) {
+    fn setup(custom_config: Option<&str>) -> (Config, PathBuf, TempDir) {
         let random_prefix: String = repeat_with(|| rand::thread_rng().gen_range(0..36))
             .map(|n| {
                 if n < 10 {
@@ -48,7 +48,7 @@ mod tests {
 
         // Initialize and load the configuration
         init_config(config_path.clone());
-        let config = Cargo::load(Some(config_path.clone())).expect("Loading Config Failed");
+        let config = Config::load(Some(config_path.clone())).expect("Loading Config Failed");
 
         // Return the loaded configuration, config file path, and temp directory
         (config, config_path, temp_dir)
@@ -199,7 +199,7 @@ allowed_subcommands = []
         );
 
         let reloaded_config =
-            Cargo::load(Some(config_path.clone())).expect("Failed to reload configuration");
+            Config::load(Some(config_path.clone())).expect("Failed to reload configuration");
 
         assert!(
             reloaded_config.context.run.is_some(),
@@ -273,7 +273,7 @@ allowed_subcommands = []
 
         // Reload the configuration to verify that the removal persists
         let reloaded_config =
-            Cargo::load(Some(config_path.clone())).expect("Failed to reload configuration");
+            Config::load(Some(config_path.clone())).expect("Failed to reload configuration");
 
         // Verify 'leptos' has been removed
         assert!(
