@@ -4,7 +4,7 @@ use std::fmt::{self, Display};
 pub enum ConfigError {
     MissingConfigFields(String),
     ConfigKeyNotFound(String),
-    InvalidPreCommand(String),
+    InvalidSubCommand(String),
     InvalidEnvFormat,
     // You can add more error variants as needed
 }
@@ -18,7 +18,7 @@ impl Display for ConfigError {
             ConfigError::ConfigKeyNotFound(key) => {
                 write!(f, "The config key '{}' does not exist.", key)
             }
-            ConfigError::InvalidPreCommand(msg) => write!(f, "{}", msg),
+            ConfigError::InvalidSubCommand(msg) => write!(f, "{}", msg),
             ConfigError::InvalidEnvFormat => write!(f, "ENV define is not ALL_CAPS"),
         }
     }

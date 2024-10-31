@@ -5,7 +5,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::models::config::CommandConfig;
+use crate::models::CommandConfig;
 
 lazy_static! {
     pub static ref CONFIGURATION_FILE_CONTENT: Arc<Mutex<String>> =
@@ -17,4 +17,3 @@ pub static DEFAULT_RUN_CONFIG: OnceCell<CommandConfig> = OnceCell::new();
 pub static DEFAULT_TEST_CONFIG: OnceCell<CommandConfig> = OnceCell::new();
 pub static DEFAULT_BUILD_CONFIG: OnceCell<CommandConfig> = OnceCell::new();
 pub static DEFAULT_BENCH_CONFIG: OnceCell<CommandConfig> = OnceCell::new();
-pub static DEFAULT_SCRIPT_CONFIG: OnceCell<CommandConfig> = OnceCell::new();

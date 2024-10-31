@@ -1,4 +1,4 @@
-use crate::{errors::ConfigError, models::config::CommandDetails};
+use crate::{errors::ConfigError, models::CommandDetails};
 
 pub trait ValidateCommandDetails {
     fn validate(&self, details: &CommandDetails) -> Result<(), ConfigError>;

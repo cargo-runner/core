@@ -16,3 +16,4 @@ serde = { version = "1.0.214", features = ["derive"] }
 tempfile = "3.13.0"
 toml = "0.8.19"
 wit-bindgen = "0.34.0"
+rand = "0.8.5"

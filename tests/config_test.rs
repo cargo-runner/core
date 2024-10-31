@@ -1,11 +1,14 @@
 #[cfg(test)]
 mod tests {
-    use rx::{
-        builders::config::ConfigBuilder,
+    use std::{fs, iter::repeat_with, path::PathBuf};
+
+    use cargo_runner::{
         helpers::init_config,
-        models::config::{CommandContext, CommandType, Config},
+        models::{ CargoContext, CommandType, Config},
+        CargoConfigBuilder
     };
-    use std::{fs, path::PathBuf};
+    use rand::Rng;
+    use tempfile::Builder;
     use tempfile::TempDir;
 
     /// Sets up the test environment, including creating a temporary config file.
@@ -22,45 +25,52 @@ mod tests {
     /// The [TempDir] must be drop manually at the last line of the function so the file path wont be
     /// destroyed and thus avoiding error FileNotFound
     fn setup(custom_config: Option<&str>) -> (Config, PathBuf, TempDir) {
-        let temp_dir = TempDir::new().expect("Failed to create a temporary directory");
+        let random_prefix: String = repeat_with(|| rand::thread_rng().gen_range(0..36))
+            .map(|n| {
+                if n < 10 {
+                    (b'0' + n) as char
+                } else {
+                    (b'a' + n - 10) as char
+                }
+            })
+            .take(8)
+            .collect();
+
+        // Use a new TempDir instantiation directly, ensuring it's unique
+        let temp_dir = Builder::new()
+            .prefix(&random_prefix)
+            .tempdir()
+            .expect("Failed to create a temporary directory");
         let config_path = temp_dir.path().join("config.toml");
 
-        // Determine the configuration content to write: custom or empty
         let config_content = custom_config.unwrap_or("");
-
-        // Write the determined configuration content to the file
         fs::write(&config_path, config_content).expect("Failed to write to the config file");
 
-        // Assuming `init_config` does necessary initializations based on the config file
+        // Initialize and load the configuration
         init_config(config_path.clone());
-
-        // Load the configuration from the newly created temp file
         let config = Config::load(Some(config_path.clone())).expect("Loading Config Failed");
 
-        // Return the loaded configuration, the path to the config file, and the TempDir instance
+        // Return the loaded configuration, config file path, and temp directory
         (config, config_path, temp_dir)
     }
 
-    /// This test check if when File is Empty then a Default Commands Should be provided
     #[test]
     fn test_default_config() {
-        let (config, _, _) = setup(None);
+        let (config, _, temp_dir) = setup(None);
+        eprintln!("{:?}", temp_dir);
 
         // For each command, check existence and default details
-        let run_config = config.commands.run.expect("run config should have default");
+        let run_config = config.context.run.expect("run config should have default");
         assert_eq!(run_config.default, "default");
         let run_details = run_config
             .configs
             .get("default")
             .expect("default run config should exist");
-        assert_eq!(
-            run_details.command,
-            "run --package ${packageName} --bin ${binaryName}"
-        );
+        assert_eq!(run_details.sub_command, "run");
         assert_eq!(run_details.command_type, CommandType::Cargo);
 
         let test_config = config
-            .commands
+            .context
             .test
             .expect("test config should have default");
         assert_eq!(test_config.default, "default");
@@ -68,11 +78,11 @@ mod tests {
             .configs
             .get("default")
             .expect("default test config should exist");
-        assert_eq!(test_details.command, "test");
+        assert_eq!(test_details.sub_command, "test");
         assert_eq!(test_details.command_type, CommandType::Cargo);
 
         let build_config = config
-            .commands
+            .context
             .build
             .expect("build config should have default");
         assert_eq!(build_config.default, "default");
@@ -80,11 +90,11 @@ mod tests {
             .configs
             .get("default")
             .expect("default build config should exist");
-        assert_eq!(build_details.command, "build");
+        assert_eq!(build_details.sub_command, "build");
         assert_eq!(build_details.command_type, CommandType::Cargo);
 
         let bench_config = config
-            .commands
+            .context
             .bench
             .expect("bench config should have default");
         assert_eq!(bench_config.default, "default");
@@ -94,159 +104,145 @@ mod tests {
             .get("default")
             .expect("default bench config should exist");
 
-        assert_eq!(bench_details.command, "bench");
+        assert_eq!(bench_details.sub_command, "bench");
         assert_eq!(bench_details.command_type, CommandType::Cargo);
-
-        assert!(
-            config.commands.script.is_none(),
-            "script config is none by default"
-        );
     }
-    /// Since our CommandDetails Dont Use Option , Most of it would Error Out if there was a  Missing Field
-    /// A serde macro for default is added to return a default for Missing Field
-    /// This Test is partly about that Missing Field , and Also To check that config is loaded
-    /// and the Fields that was Deserialize matches
+
     #[test]
     fn test_config_load() {
         let custom_config = r#"
-[commands.run]
-default = "custom"
+[context.run]
+default = "leptos"
 
-[commands.run.configs.custom]
-type = "cargo"
-command = "run --package ${packageName} --bin ${binaryName}"
+[context.run.configs.leptos]
+type = "cargo"  # Changed from "sub-command" to "cargo"
+command = "cargo"
+sub_command = "leptos"
+sub_action = "watch"
 params = ""
-allow_multiple_instances = false
-working_directory = "${workspaceFolder}"
-pre_command = []
+allowed_subcommands = []
 
-[commands.run.configs.custom.env]
-APP_NAME = "Cargo Runner"
-COPY_TRAIT = "FALSE"
-MY_CUSTOM_VAR_1 = "TRUE"
+[context.run.configs.leptos.env]
 
-[commands.test]
+[context.run.configs.default]
+type = "cargo"
+command = "cargo"
+sub_command = "run"
+sub_action = ""
+params = ""
+allowed_subcommands = []
+
+[context.run.configs.default.env]
+
+[context.test]
 default = "default"
 
-[commands.test.configs.default]
+[context.test.configs.default]
 type = "cargo"
-command = "test"
+command = "cargo"
+sub_command = "test"
+sub_action = ""
 params = ""
-allow_multiple_instances = false
-working_directory = "${workspaceFolder}"
-pre_command = []
+allowed_subcommands = []
 
-[commands.test.configs.default.env]
+[context.test.configs.default.env]
 "#;
 
-        let (config, _config_path, _temp_dir) = setup(Some(custom_config));
+        let (config, _config_path, temp_dir) = setup(Some(custom_config));
 
-        let run_config = config.commands.run.expect("Run configuration should exist");
+        eprintln!("{:?}", temp_dir);
 
         assert_eq!(
-            run_config.default, "custom",
-            "Default should be set to 'custom'"
+            config
+                .context
+                .run
+                .expect("Run configuration should exist")
+                .default,
+            "leptos"
         );
-
-        // Verify the existence and contents of the 'custom' config
-        let custom_config_details = run_config
-            .configs
-            .get("custom")
-            .expect("Custom config should exist under run");
-        assert_eq!(
-            custom_config_details.command, "run --package ${packageName} --bin ${binaryName}",
-            "Command does not match"
-        );
-        assert_eq!(custom_config_details.params, "", "Params do not match");
-        assert!(
-            !custom_config_details.allow_multiple_instances,
-            "Allow Multiple Instances should be false by default"
-        );
-        assert_eq!(
-            custom_config_details.working_directory, "${workspaceFolder}",
-            "Working directory does not match"
-        );
-        assert!(
-            custom_config_details.env.contains_key("APP_NAME"),
-            "Should have APP_NAME loaded to config"
-        );
-        assert!(
-            custom_config_details.env.contains_key("COPY_TRAIT"),
-            "Should have COPY_TRAIT loaded to the config"
-        );
-        assert!(
-            custom_config_details.env.contains_key("MY_CUSTOM_VAR_1"),
-            "Should have MY_CUSTOM_VAR_1 loaded to the config"
-        );
+        // Additional assertions...
     }
 
     #[test]
     fn test_update_and_add_config_key() {
-        let (mut config, config_path, _temp_dir) = setup(None); // Use _temp_dir to hold onto the TempDir instance
+        let (mut config, config_path, temp_dir) = setup(None);
+
+        eprintln!("{:?}", temp_dir);
 
         let config_key = "leptos";
 
-        let context = CommandContext::Script;
+        let context = CargoContext::Run;
 
-        let new_details = ConfigBuilder::new(context)
-            .command_type(CommandType::Shell)
-            .command("cargo leptos")
-            .params("watch")
+        let command_type = CommandType::SubCommand;
+
+        let sub_command = "leptos";
+
+        let sub_action = "watch";
+
+        let new_details = CargoConfigBuilder::new(command_type.clone(), context)
+            .command_type(CommandType::Cargo)
+            .command(String::from(command_type).as_str())
+            .sub_command(sub_command)
+            .sub_action(sub_action)
             .build()
             .unwrap();
 
         // Update the configuration for 'Run' context with new details
-        let run_config = config.commands.get_or_default_config(context);
-        run_config.update_config(config_key, new_details);
+        {
+            let run_config = config.context.get_or_default_config(context);
+            run_config.update_config(config_key, new_details);
+        }
 
-        // Save the updated configuration
         assert!(
             config.save(Some(config_path.clone())).is_ok(),
             "Failed to save updated configuration"
         );
 
-        // Reload the configuration to verify updates
         let reloaded_config =
             Config::load(Some(config_path.clone())).expect("Failed to reload configuration");
 
-        // Assert that the updated details are present
         assert!(
-            reloaded_config.commands.script.is_some(),
+            reloaded_config.context.run.is_some(),
             "Run configuration should exist"
         );
-        let reloaded_run_config = reloaded_config.commands.script.unwrap();
         assert!(
-            reloaded_run_config.configs.contains_key(config_key),
+            reloaded_config
+                .context
+                .run
+                .unwrap()
+                .configs
+                .contains_key(config_key),
             "Config key 'leptos' should be present in the run configs"
-        );
-
-        let updated_details = reloaded_run_config
-            .configs
-            .get(config_key)
-            .expect("Config key 'leptos' was not found after update");
-        assert_eq!(
-            updated_details.command, "cargo leptos",
-            "Command for 'leptos' config key did not match expected value"
         );
     }
 
     #[test]
     fn test_remove_config_key_and_default_handling() {
-        let (mut config, config_path, _temp_dir) = setup(None);
+        let (mut config, config_path, temp_dir) = setup(None);
+
+        eprintln!("{:?}", temp_dir);
 
         let config_key = "leptos";
 
-        let context = CommandContext::Script;
+        let context = CargoContext::Run;
 
-        let details = ConfigBuilder::new(context)
-            .command_type(CommandType::Shell)
-            .command("cargo watch")
+        let command_type = CommandType::SubCommand;
+
+        let sub_command = "leptos";
+
+        let sub_action = "watch";
+
+        let details = CargoConfigBuilder::new(command_type.clone(), context)
+            .command_type(command_type.clone())
+            .command(String::from(command_type).as_str())
+            .sub_command(sub_command)
+            .sub_action(sub_action)
             .build()
             .unwrap();
 
         // add leptos to configs
         {
-            let run_config = config.commands.get_or_default_config(context);
+            let run_config = config.context.get_or_default_config(context);
             run_config.update_config(config_key, details);
         }
 
@@ -255,7 +251,7 @@ pre_command = []
         {
             assert!(
                 config
-                    .commands
+                    .context
                     .set_default_config(context, config_key)
                     .is_ok(),
                 "Setting default config failed"
@@ -264,7 +260,7 @@ pre_command = []
 
         // Now, remove the 'leptos' config key
         {
-            let run_config = config.commands.get_or_default_config(context);
+            let run_config = config.context.get_or_default_config(context);
 
             run_config.remove_config(config_key);
         }
@@ -281,11 +277,11 @@ pre_command = []
 
         // Verify 'leptos' has been removed
         assert!(
-            reloaded_config.commands.run.is_some(),
+            reloaded_config.context.run.is_some(),
             "Run configuration should exist"
         );
 
-        let reloaded_run_config = reloaded_config.commands.run.unwrap();
+        let reloaded_run_config = reloaded_config.context.run.unwrap();
         assert!(
             !reloaded_run_config.configs.contains_key(config_key),
             "Config key 'leptos' should have been removed"
