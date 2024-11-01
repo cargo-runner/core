@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
 };
@@ -9,7 +7,7 @@ pub enum CommandType {
     #[default]
     Cargo,
     SubCommand,
-    Shell(Cow<'static, str>), // Changed Command to Shell
+    Shell
 }
 
 impl Serialize for CommandType {
@@ -20,7 +18,7 @@ impl Serialize for CommandType {
         let s = match self {
             CommandType::Cargo => "cargo",
             CommandType::SubCommand => "subcommand",
-            CommandType::Shell(ref shell) => shell.as_ref(),
+            CommandType::Shell => "shell",
         };
         serializer.serialize_str(s)
     }
@@ -35,7 +33,8 @@ impl<'de> Deserialize<'de> for CommandType {
         match s.as_str() {
             "cargo" => Ok(CommandType::Cargo),
             "subcommand" => Ok(CommandType::SubCommand),
-            _ => Ok(CommandType::Shell(Cow::Owned(s))),
+            "shell" => Ok(CommandType::Shell),
+            _ => Ok(CommandType::Cargo),
         }
     }
 }
