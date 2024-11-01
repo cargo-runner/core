@@ -9,3 +9,4 @@ node_modules/
 *.vsix
 example.toml
 cargo-runner*.toml
+output.toml
