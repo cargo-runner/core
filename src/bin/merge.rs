@@ -1,15 +1,12 @@
 use cargo_runner::models::Config;
-use std::fs;
+use std::{fs, path::PathBuf};
 use toml;
 
 fn main() {
     
-
+    Config::init();
     // Load the second config file
-    let data = fs::read_to_string("cargo-runner-dx1.toml")
-        .expect("Failed to read cargo-runner-dx1.toml");
-    let config: Config = toml::from_str(&data)
-        .expect("Failed to parse cargo-runner-dx1.toml");
+    let config = Config::load(PathBuf::from("cargo-runner-dx1.toml"));
 
     println!("loading data from cargo-runner-dx1.toml");
     println!("{:#?}", config);
