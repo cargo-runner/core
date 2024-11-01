@@ -8,4 +8,4 @@ node_modules/
 *.bak
 *.vsix
 example.toml
-cargo-runner.toml
+cargo-runner*.toml
