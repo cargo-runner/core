@@ -1,304 +1,411 @@
-use serde::ser::{SerializeMap, Serializer};
-use serde::{Deserialize, Serialize};
-use std::collections::{BTreeSet, HashMap};
-use std::error::Error;
-use std::path::PathBuf;
-use toml;
+use std::{collections::HashMap, fs, path::PathBuf};
 
-use crate::errors::ConfigError;
-use crate::global::{CONFIGURATION_FILE_CONTENT, DEFAULT_CONFIG_PATH};
-use crate::helpers::{read_file, write_to_config_file};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Copy)]
-#[serde(rename_all = "lowercase")]
-pub enum CommandContext {
-    Run,
-    Test,
-    Build,
-    Bench,
-    Script,
+use super::{CommandConfig, CommandType};
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Config(pub HashMap<String, (Option<String>, Option<Vec<CommandConfig>>)>);
+
+impl Serialize for Config {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        use serde::ser::SerializeMap;
+
+        let mut map = serializer.serialize_map(Some(self.0.len()))?;
+
+        for (key, (default, commands)) in &self.0 {
+            #[derive(Serialize)]
+            struct CommandEntry<'a> {
+                default: Option<&'a String>,
+                commands: Option<&'a Vec<CommandConfig>>,
+            }
+
+            map.serialize_entry(
+                key,
+                &CommandEntry {
+                    default: default.as_ref(),
+                    commands: commands.as_ref(),
+                },
+            )?;
+        }
+
+        map.end()
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq)]
-#[serde(rename_all = "lowercase")]
-pub enum CommandType {
-    #[default]
-    Cargo,
-    Shell,
+// Custom deserialization implementation
+impl<'de> Deserialize<'de> for Config {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct CommandEntry {
+            default: Option<String>,
+            commands: Option<Vec<CommandConfig>>,
+        }
+
+        let map = HashMap::<String, CommandEntry>::deserialize(deserializer)?;
+
+        let converted = map
+            .into_iter()
+            .map(|(k, v)| (k, (v.default, v.commands)))
+            .collect();
+
+        Ok(Config(converted))
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq)]
-pub struct Config {
-    #[serde(default = "default_commands_on_empty_file")]
-    pub commands: Commands,
+impl Default for Config {
+    fn default() -> Self {
+        let mut commands = HashMap::new();
+
+        // Add default commands
+        commands.insert(
+            "run".to_string(),
+            (
+                Some("default".to_string()),
+                Some(vec![CommandConfig {
+                    name: "default".to_string(),
+                    command_type: Some(CommandType::Cargo),
+                    command: Some("cargo".to_string()),
+                    sub_command: Some("run".to_string()),
+                    allowed_subcommands: Some(vec![]),
+                    env: Some(HashMap::new()),
+                }]),
+            ),
+        );
+
+        commands.insert(
+            "test".to_string(),
+            (
+                Some("default".to_string()),
+                Some(vec![CommandConfig {
+                    name: "default".to_string(),
+                    command_type: Some(CommandType::Cargo),
+                    command: Some("cargo".to_string()),
+                    sub_command: Some("test".to_string()),
+                    allowed_subcommands: Some(vec![]),
+                    env: Some(HashMap::new()),
+                }]),
+            ),
+        );
+
+        commands.insert(
+            "build".to_string(),
+            (
+                Some("default".to_string()),
+                Some(vec![CommandConfig {
+                    name: "default".to_string(),
+                    command_type: Some(CommandType::Cargo),
+                    command: Some("cargo".to_string()),
+                    sub_command: Some("build".to_string()),
+                    allowed_subcommands: Some(vec![]),
+                    env: Some(HashMap::new()),
+                }]),
+            ),
+        );
+
+        commands.insert(
+            "bench".to_string(),
+            (
+                Some("default".to_string()),
+                Some(vec![CommandConfig {
+                    name: "default".to_string(),
+                    command_type: Some(CommandType::Cargo),
+                    command: Some("cargo".to_string()),
+                    sub_command: Some("bench".to_string()),
+                    allowed_subcommands: Some(vec![]),
+                    env: Some(HashMap::new()),
+                }]),
+            ),
+        );
+
+        Config(commands)
+    }
 }
 
-fn default_commands_on_empty_file() -> Commands {
-    Commands {
-        run: Some(CommandConfig::with_context("run")),
-        test: Some(CommandConfig::with_context("test")),
-        build: Some(CommandConfig::with_context("build")),
-        bench: Some(CommandConfig::with_context("bench")),
-        script: None,
+impl Into<String> for Config {
+    fn into(self) -> String {
+        toml::to_string_pretty(&self).expect("Failed to serialize config to TOML")
+    }
+}
+
+impl From<String> for Config {
+    fn from(value: String) -> Self {
+        toml::from_str(&value).expect("Failed to convert String to Config")
+    }
+}
+
+impl From<&str> for Config {
+    fn from(value: &str) -> Self {
+        toml::from_str(value).expect("Failed to convert String to Config")
     }
 }
 
 impl Config {
-    pub fn load(path: Option<PathBuf>) -> Result<Config, Box<dyn Error>> {
-        if let Some(file_path) = path {
-            read_file(file_path.as_path())?;
-        } else {
-            read_file(DEFAULT_CONFIG_PATH.get().unwrap())?;
-        }
-
-        let file_content = CONFIGURATION_FILE_CONTENT.lock().unwrap();
-
-        let config: Config = toml::from_str(&file_content)?;
-
-        Ok(config)
-    }
-
-    pub fn save(&self, path: Option<PathBuf>) -> Result<(), Box<dyn Error>> {
-        // Determine the file path to use: provided path or default
-        let file_path = path.unwrap_or_else(|| {
-            DEFAULT_CONFIG_PATH
-                .get()
-                .expect("DEFAULT_CONFIG_PATH not set")
-                .clone()
-        });
-
-        // We need Config Struct and all Other Fields (struct or enum) to be impl Serialize
-        let toml_string = toml::to_string_pretty(&self)?;
-
-        // Write the serialized string to the file line by line
-        write_to_config_file(&file_path, &toml_string)?;
-
-        Ok(())
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
-pub struct Commands {
-    pub run: Option<CommandConfig>,
-    pub test: Option<CommandConfig>,
-    pub build: Option<CommandConfig>,
-    pub bench: Option<CommandConfig>,
-    pub script: Option<CommandConfig>,
-}
-
-impl Default for Commands {
-    fn default() -> Self {
-        Commands {
-            run: Some(CommandConfig::with_context("run")),
-            test: Some(CommandConfig::with_context("test")),
-            build: Some(CommandConfig::with_context("build")),
-            bench: Some(CommandConfig::with_context("bench")),
-            script: None,
-        }
-    }
-}
-
-impl Commands {
-    pub fn get_configs(&self, context: CommandContext) -> Vec<String> {
-        match context {
-            CommandContext::Run => self
-                .run
-                .as_ref()
-                .map_or(vec![], |config| config.configs.keys().cloned().collect()),
-            CommandContext::Test => self
-                .test
-                .as_ref()
-                .map_or(vec![], |config| config.configs.keys().cloned().collect()),
-            CommandContext::Build => self
-                .build
-                .as_ref()
-                .map_or(vec![], |config| config.configs.keys().cloned().collect()),
-            CommandContext::Bench => self
-                .bench
-                .as_ref()
-                .map_or(vec![], |config| config.configs.keys().cloned().collect()),
-            CommandContext::Script => self
-                .script
-                .as_ref()
-                .map_or(vec![], |config| config.configs.keys().cloned().collect()),
-        }
-    }
-
-    pub fn get_or_default_config(&mut self, context: CommandContext) -> &mut CommandConfig {
-        match context {
-            CommandContext::Run => self.run.get_or_insert_with(CommandConfig::default),
-            CommandContext::Test => self.test.get_or_insert_with(CommandConfig::default),
-            CommandContext::Build => self.build.get_or_insert_with(CommandConfig::default),
-            CommandContext::Bench => self.bench.get_or_insert_with(CommandConfig::default),
-            CommandContext::Script => self.script.get_or_insert_with(CommandConfig::default),
-        }
-    }
-    pub fn set_default_config(
-        &mut self,
-        context: CommandContext,
-        new_default_key: &str,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let command_config = match context {
-            CommandContext::Run => &mut self.run,
-            CommandContext::Test => &mut self.test,
-            CommandContext::Build => &mut self.build,
-            CommandContext::Bench => &mut self.bench,
-            CommandContext::Script => &mut self.script,
-        };
-
-        if let Some(config) = command_config {
-            if config.configs.contains_key(new_default_key) {
-                config.default = new_default_key.to_string();
-                Ok(())
-            } else {
-                Err(Box::new(ConfigError::ConfigKeyNotFound(
-                    new_default_key.to_string(),
-                )))
+    pub fn set_default(&mut self, command_type: &str, name: &str) -> Result<(), String> {
+        if let Some((_, configs)) = self.0.get(command_type) {
+            if let Some(configs) = configs {
+                if configs.iter().any(|c| c.name == name) {
+                    self.0.insert(
+                        command_type.to_string(),
+                        (Some(name.to_string()), Some(configs.clone())),
+                    );
+                    return Ok(());
+                }
             }
-        } else {
-            Err(Box::new(ConfigError::ConfigKeyNotFound(
-                new_default_key.to_string(),
-            )))
+        }
+        Err(format!(
+            "Command '{}' not found for type '{}'",
+            name, command_type
+        ))
+    }
+
+    pub fn get_default(&self, command_type: &str) -> Option<&str> {
+        self.0
+            .get(command_type)
+            .and_then(|(default, _)| default.as_ref())
+            .map(|s| s.as_str())
+    }
+
+    pub fn init() -> Config {
+        let home = dirs::home_dir().expect("Could not find home directory");
+        let config_dir = home.join(".cargo-runner");
+        let config_path = config_dir.join("config.toml");
+
+        // Create the config directory if it doesn't exist
+        fs::create_dir_all(&config_dir).expect("Failed to create config directory");
+
+        // Attempt to load the config
+        Config::load(config_path)
+    }
+
+    pub fn load(path: PathBuf) -> Config {
+        match fs::read_to_string(&path) {
+            Ok(data) => {
+                toml::from_str(&data).unwrap_or_else(|_| {
+                    eprintln!("Failed to parse config file from: {}", path.display());
+                    Self::create_backup(&path); // Create a backup on parse failure
+
+                    // Write the default config to the file
+                    let default_config = Self::default();
+                    let toml = toml::to_string_pretty(&default_config)
+                        .expect("Failed to serialize default config");
+                    fs::write(&path, toml).expect("Failed to write default config file");
+
+                    default_config // Return default config
+                })
+            }
+            Err(_) => {
+                eprintln!("Failed to read config path: {}", path.display());
+                Self::create_backup(&path); // Create a backup on read failure
+
+                // Write the default config to the file
+                let default_config = Self::default();
+                let toml = toml::to_string_pretty(&default_config)
+                    .expect("Failed to serialize default config");
+                fs::write(&path, toml).expect("Failed to write default config file");
+
+                default_config // Return default config
+            }
+        }
+    }
+
+    pub fn merge(&mut self, other: Config) {
+        for (command_type, (other_default, other_configs)) in other.0 {
+            let command_type_clone = command_type.clone(); // Clone command_type for later use
+            let (base_default, base_configs) = self
+                .0
+                .entry(command_type_clone) // Use the cloned value here
+                .or_insert_with(|| (None, Some(Vec::new())));
+
+            // Merge command configurations first
+            if let Some(other_configs) = other_configs {
+                if let Some(base) = base_configs {
+                    for other_config in other_configs {
+                        // Check if the command already exists
+                        if let Some(existing) =
+                            base.iter_mut().find(|c| c.name == other_config.name)
+                        {
+                            existing.merge(&other_config); // Merge existing command
+                        } else {
+                            base.push(other_config.clone()); // Add new command
+                        }
+                    }
+                }
+            }
+
+            // Now update the default value if the other configuration has one
+            if let Some(ref new_default) = other_default {
+                // Check if the new default exists in the command list
+                if let Some(base) = base_configs {
+                    if base.iter().any(|cmd| cmd.name == *new_default) {
+                        *base_default = Some(new_default.clone()); // Update the default field
+                    } else {
+                        eprintln!(
+                            "Warning: Default command '{}' does not exist in the '{}' commands.",
+                            new_default, command_type
+                        );
+                        // Optionally, you can set it to None or keep the existing default
+                    }
+                }
+            }
+        }
+    }
+
+    fn create_backup(config_path: &PathBuf) {
+        let backup_path_with_index = config_path.with_extension(""); // Start with the original path without extension
+        let mut index = 0; // Start with 0
+
+        // Check if the backup file already exists and append an index if it does
+        loop {
+            let backup_file_name = format!(
+                "{}.{}.bak",
+                backup_path_with_index
+                    .file_stem()
+                    .unwrap()
+                    .to_str()
+                    .unwrap(),
+                index
+            );
+            let backup_path = backup_path_with_index.with_file_name(backup_file_name);
+
+            if !backup_path.exists() {
+                // Copy the original config file to the backup path
+                match fs::copy(config_path, &backup_path) {
+                    Ok(_) => {
+                        println!("Backup created at: {}", backup_path.display());
+                        break; // Exit the loop after creating the backup
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to create backup of the config file: {}", e);
+                        break; // Exit the loop on error
+                    }
+                }
+            }
+            index += 1; // Increment index for the next backup name
         }
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
-pub struct CommandConfig {
-    #[serde(default = "default_command_config")]
-    pub default: String,
-    pub configs: HashMap<String, CommandDetails>,
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-fn default_command_config() -> String {
-    String::from("default")
-}
+    #[test]
+    fn test_default_commands() {
+        let config = Config::default();
 
-impl CommandConfig {
-    fn default_command_details(command: &str, command_type: CommandType) -> CommandDetails {
-        CommandDetails {
-            command_type,
-            command: command.to_string(),
-            params: "".to_string(),
-            allow_multiple_instances: false,
-            working_directory: "${workspaceFolder}".to_string(),
-            pre_command: BTreeSet::new(),
-            env: HashMap::new(),
-        }
+        // Test run command default
+        assert_eq!(config.get_default("run"), Some("default"));
+
+        // Test setting new default
+        let mut config = Config::default();
+        config
+            .0
+            .get_mut("run")
+            .unwrap()
+            .1
+            .as_mut()
+            .unwrap()
+            .push(CommandConfig {
+                name: "dx".to_string(),
+                command_type: Some(CommandType::Shell),
+                command: Some("dx".to_string()),
+                sub_command: Some("serve".to_string()),
+                allowed_subcommands: Some(vec![]),
+                env: Some(HashMap::new()),
+            });
+
+        assert!(config.set_default("run", "dx").is_ok());
+        assert_eq!(config.get_default("run"), Some("dx"));
     }
 
-    pub fn with_context(context: &str) -> Self {
-        let default_details = match context {
-            "run" => Self::default_command_details(
-                "run --package ${packageName} --bin ${binaryName}",
-                CommandType::Cargo,
-            ),
-            "test" => Self::default_command_details("test", CommandType::Cargo),
-            "build" => Self::default_command_details("build", CommandType::Cargo),
-            "bench" => Self::default_command_details("bench", CommandType::Cargo),
-            _ => Self::default_command_details("script", CommandType::Shell),
-        };
+    #[test]
+    fn test_parse_dx_config() {
+        let dx_content = r#"
+        [run]
+        default = "dx"
+        commands = [
+            {
+                name = "dx",
+                command_type = "shell",
+                command = "dx",
+                sub_command = "serve",
+                allowed_subcommands = ["build", "serve"],
+                env = {}
+            }
+        ]
+        "#;
 
-        let mut configs = HashMap::new();
-        configs.insert("default".to_string(), default_details);
+        let config: Config = toml::from_str(dx_content).expect("Failed to parse dx config");
 
-        Self {
-            default: "default".into(),
-            configs,
-        }
+        let (default, run_configs) = config.0.get("run").expect("Run config should exist");
+        let run_configs = run_configs.as_ref().expect("Run config should have values");
+
+        assert_eq!(run_configs.len(), 1);
+        assert_eq!(default.as_ref().map(String::as_str), Some("dx"));
+
+        let dx_config = &run_configs[0];
+        assert_eq!(dx_config.name, "dx");
+        assert_eq!(dx_config.command, Some("dx".to_string()));
+        assert_eq!(dx_config.sub_command, Some("serve".to_string()));
+        assert!(matches!(dx_config.command_type, Some(CommandType::Shell)));
+
+        assert!(config.0.get("test").is_none());
+        assert!(config.0.get("build").is_none());
+        assert!(config.0.get("bench").is_none());
     }
 
-    pub fn update_config(&mut self, key: &str, details: CommandDetails) {
-        self.configs.insert(key.to_string(), details);
+    #[test]
+    fn test_merge_configs() {
+        let mut base_config = Config::default();
+
+        let dx_content = r#"
+        [run]
+        default = "dx"
+        commands = [
+            {
+                name = "dx",
+                command_type = "shell",
+                command = "dx",
+                sub_command = "serve",
+                allowed_subcommands = ["build", "serve"],
+                env = {}
+            }
+        ]
+        "#;
+
+        let dx_config: Config = toml::from_str(dx_content).expect("Failed to parse dx config");
+
+        base_config.merge(dx_config);
+
+        let (default, run_configs) = base_config.0.get("run").expect("Run config should exist");
+        let run_configs = run_configs.as_ref().expect("Run config should have values");
+
+        assert_eq!(run_configs.len(), 2);
+        assert_eq!(default.as_ref().map(String::as_str), Some("dx"));
+
+        let dx_config = run_configs
+            .iter()
+            .find(|c| c.name == "dx")
+            .expect("dx config should exist");
+
+        assert_eq!(dx_config.command, Some("dx".to_string()));
+        assert_eq!(dx_config.sub_command, Some("serve".to_string()));
+        assert!(matches!(dx_config.command_type, Some(CommandType::Shell)));
+
+        let default_config = run_configs
+            .iter()
+            .find(|c| c.name == "default")
+            .expect("default config should exist");
+
+        assert_eq!(default_config.command, Some("cargo".to_string()));
+        assert_eq!(default_config.sub_command, Some("run".to_string()));
+        assert_eq!(default_config.command_type, Some(CommandType::Cargo));
     }
-
-    pub fn remove_config(&mut self, key: &str) {
-        // Remove the specified config key
-        self.configs.remove(key);
-
-        // Check if the removed key was the default and reset the default if necessary
-        if self.default == key {
-            // Reset to a predefined fallback default key
-            // Adjust this logic based on how you want to handle resetting the default
-            // For example, you could check for other existing keys and choose one of them as the new default
-            self.default = "default".to_string(); // Assuming "default" is a sensible fallback default key
-
-            // Alternatively, find the first available key in `self.configs` to set as new default
-            // if you prefer dynamically choosing a new default based on existing keys
-            /*
-            self.default = self.configs.keys().next().cloned().unwrap_or_else(|| "default".to_string());
-            */
-        }
-    }
-}
-
-impl Default for CommandConfig {
-    fn default() -> Self {
-        Self {
-            default: "default".into(),
-            configs: HashMap::new(), // An empty HashMap
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq)]
-pub struct CommandDetails {
-    #[serde(rename = "type", default = "default_command_type")]
-    pub command_type: CommandType,
-    #[serde(default = "default_command")]
-    pub command: String,
-    #[serde(default = "default_params")]
-    pub params: String,
-    #[serde(serialize_with = "serialize_env", default = "default_env")]
-    pub env: HashMap<String, String>,
-    #[serde(default = "default_allow_multiple_instances")]
-    pub allow_multiple_instances: bool,
-    #[serde(default = "default_working_directory")]
-    pub working_directory: String,
-    #[serde(default = "default_pre_command")]
-    pub pre_command: BTreeSet<String>,
-}
-
-fn default_command_type() -> CommandType {
-    CommandType::Cargo
-}
-
-fn default_command() -> String {
-    String::from("run")
-}
-
-fn default_params() -> String {
-    String::new()
-}
-
-fn default_env() -> HashMap<String, String> {
-    HashMap::new()
-}
-
-fn default_allow_multiple_instances() -> bool {
-    false
-}
-fn default_working_directory() -> String {
-    String::from("${workspaceFolder}")
-}
-fn default_pre_command() -> BTreeSet<String> {
-    BTreeSet::new()
-}
-
-fn serialize_env<S>(env: &HashMap<String, String>, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    let mut map = serializer.serialize_map(Some(env.len()))?;
-    for (k, v) in env {
-        if let Ok(bool_val) = v.parse::<bool>() {
-            map.serialize_entry(k, &bool_val)?;
-        } else if let Ok(int_val) = v.parse::<i64>() {
-            map.serialize_entry(k, &int_val)?;
-        } else {
-            // Fallback to string if it's neither bool nor int
-            map.serialize_entry(k, v)?;
-        }
-    }
-    map.end()
 }
