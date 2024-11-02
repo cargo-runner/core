@@ -1,0 +1,14 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "build",
+			"path": "crates/vscode",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: build - crates/vscode",
+			"detail": "npm run wit-bindgen && npm run wit && npm run compile && cargo build --target wasm32-unknown-unknown && npm run esbuild"
+		}
+	]
+}

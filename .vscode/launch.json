@@ -7,13 +7,13 @@
 			"name": "Run Cargo Runner Extension",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceRoot}",
+				"--extensionDevelopmentPath=${workspaceRoot}/crates/vscode",
 			],
 			"outFiles": [
-				"${workspaceRoot}/out/**/*.js"
+				"${workspaceRoot}/crates/vscode/out/**/*.js"
 			],
 			"sourceMaps": true,
-			"preLaunchTask": "npm: build"
+			"preLaunchTask": "npm: build - crates/vscode"
 		}
 	]
 }
