@@ -7,4 +7,5 @@ node_modules/
 *.tsbuildinfo
 *.bak
 *.vsix
+.config.toml
 cargo-runner*.toml

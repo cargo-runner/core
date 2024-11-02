@@ -1,4 +1,4 @@
-use cargo_runner::models::Config;
+use core::models::Config;
 use std::{fs, path::PathBuf};
 use toml;
 
