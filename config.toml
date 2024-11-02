@@ -1,0 +1,37 @@
+[[run]]
+name = "default"
+command_type = "cargo"
+command = "cargo"
+sub_command = "run"
+allowed_subcommands = []
+
+[run.env]
+
+
+[[test]]
+name = "default"
+command_type = "cargo"
+command = "cargo"
+sub_command = "test"
+allowed_subcommands = []
+
+[test.env]
+RUSTFLAGS = "-Awarnings"
+
+[[build]]
+name = "default"
+command_type = "cargo"
+command = "cargo"
+sub_command = "build"
+allowed_subcommands = []
+
+[build.env]
+
+[[bench]]
+name = "default"
+command_type = "cargo"
+command = "cargo"
+sub_command = "bench"
+allowed_subcommands = []
+
+[bench.env]

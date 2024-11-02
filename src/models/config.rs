@@ -1,80 +1,74 @@
-use std::{collections::HashMap, fs, path::PathBuf};
+use std::{collections::HashMap, fs,  path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
 use super::{CommandConfig, CommandType};
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
-pub struct Config {
-    #[serde(default)]
-    pub run: Option<Vec<CommandConfig>>,
-    #[serde(default)]
-    pub test: Option<Vec<CommandConfig>>,
-    #[serde(default)]
-    pub build: Option<Vec<CommandConfig>>,
-    #[serde(default)]
-    pub bench: Option<Vec<CommandConfig>>,
-}
+pub struct Config (
+    HashMap<String, Option<Vec<CommandConfig>>>,
+);
 
 impl Default for Config {
     fn default() -> Self {
-        Config {
-            run: Some(vec![CommandConfig {
-                name: "default".to_string(),
-                command_type: Some(CommandType::Cargo),
-                command: Some("cargo".to_string()),
-                sub_command: Some("run".to_string()),
-                allowed_subcommands: Some(vec![]),
-                env: Some(HashMap::new()),
-            }]),
-            test: Some(vec![CommandConfig {
-                name: "default".to_string(),
-                command_type: Some(CommandType::Cargo),
-                command: Some("cargo".to_string()),
-                sub_command: Some("test".to_string()),
-                allowed_subcommands: Some(vec![]),
-                env: Some(HashMap::new()),
-            }]),
-            build: Some(vec![CommandConfig {
-                name: "default".to_string(),
-                command_type: Some(CommandType::Cargo),
-                command: Some("cargo".to_string()),
-                sub_command: Some("build".to_string()),
-                allowed_subcommands: Some(vec![]),
-                env: Some(HashMap::new()),
-            }]),
-            bench: Some(vec![CommandConfig {
-                name: "default".to_string(),
-                command_type: Some(CommandType::Cargo),
-                command: Some("cargo".to_string()),
-                sub_command: Some("bench".to_string()),
-                allowed_subcommands: Some(vec![]),
-                env: Some(HashMap::new()),
-            }]),
-        }
+        let mut commands = HashMap::new();
+        
+        // Add default commands
+        commands.insert("run".to_string(), Some(vec![CommandConfig {
+            name: "default".to_string(),
+            command_type: Some(CommandType::Cargo),
+            command: Some("cargo".to_string()),
+            sub_command: Some("run".to_string()),
+            allowed_subcommands: Some(vec![]),
+            env: Some(HashMap::new()),
+        }]));
+
+        commands.insert("test".to_string(), Some(vec![CommandConfig {
+            name: "default".to_string(),
+            command_type: Some(CommandType::Cargo),
+            command: Some("cargo".to_string()),
+            sub_command: Some("test".to_string()),
+            allowed_subcommands: Some(vec![]),
+            env: Some(HashMap::new()),
+        }]));
+
+        commands.insert("build".to_string(), Some(vec![CommandConfig {
+            name: "default".to_string(),
+            command_type: Some(CommandType::Cargo),
+            command: Some("cargo".to_string()),
+            sub_command: Some("build".to_string()),
+            allowed_subcommands: Some(vec![]),
+            env: Some(HashMap::new()),
+        }]));
+
+        commands.insert("bench".to_string(), Some(vec![CommandConfig {
+            name: "default".to_string(),
+            command_type: Some(CommandType::Cargo),
+            command: Some("cargo".to_string()),
+            sub_command: Some("bench".to_string()),
+            allowed_subcommands: Some(vec![]),
+            env: Some(HashMap::new()),
+        }]));
+
+        Config(commands)
     }
 }
 
 impl Into<String> for Config {
     fn into(self) -> String {
-         toml::to_string_pretty(&self)
-        .expect("Failed to serialize config to TOML")
+        toml::to_string_pretty(&self).expect("Failed to serialize config to TOML")
     }
 }
 
 impl From<String> for Config {
     fn from(value: String) -> Self {
-        toml::from_str(&value).expect(
-            "Failed to convert String to Config"
-        )
+        toml::from_str(&value).expect("Failed to convert String to Config")
     }
 }
 
 impl From<&str> for Config {
     fn from(value: &str) -> Self {
-        toml::from_str(value).expect(
-            "Failed to convert String to Config"
-        )
+        toml::from_str(value).expect("Failed to convert String to Config")
     }
 }
 
@@ -84,19 +78,13 @@ impl Config {
         let config_dir = home.join(".cargo-runner");
         let config_path = config_dir.join("config.toml");
 
-        // Check if config already exists
         if config_path.exists() {
             return Some(Config::load(config_path));
         }
 
-        // Create directory if it doesn't exist
         fs::create_dir_all(&config_dir).expect("Failed to create config directory");
-
-        // Generate default config and serialize to TOML
-        let toml =
-            toml::to_string_pretty(&Self::default()).expect("Failed to serialize default config");
-
-        // Write to file
+        let toml = toml::to_string_pretty(&Self::default())
+            .expect("Failed to serialize default config");
         fs::write(&config_path, toml).expect("Failed to write default config file");
 
         None
@@ -111,51 +99,49 @@ impl Config {
         ))
     }
     pub fn merge(&mut self, other: Config) {
-        // Create a vector of tuples containing references to both source and destination
-        let configs_to_merge = [
-            (other.run.as_ref(), &mut self.run),
-            (other.test.as_ref(), &mut self.test),
-            (other.build.as_ref(), &mut self.build),
-            (other.bench.as_ref(), &mut self.bench),
-        ];
-
-        // Process each pair of configs
-        for (other_configs, base_configs) in configs_to_merge {
+        for (command_type, other_configs) in other.0 {
             if let Some(other_configs) = other_configs {
-                if base_configs.is_none() {
-                    *base_configs = Some(Vec::new());
-                }
-
-                let base = base_configs.as_mut().unwrap();
-                for other_config in other_configs {
-                    if let Some(existing) = base.iter_mut().find(|c| c.name == other_config.name) {
-                        existing.merge(other_config);
-                    } else {
-                        base.push(other_config.clone());
+                let base_configs = self.0
+                    .entry(command_type)
+                    .or_insert_with(|| Some(Vec::new()));
+                
+                if let Some(base) = base_configs {
+                    for other_config in other_configs {
+                        if let Some(existing) = base.iter_mut().find(|c| c.name == other_config.name) {
+                            existing.merge(&other_config);
+                        } else {
+                            base.push(other_config.clone());
+                        }
                     }
                 }
             }
         }
     }
-
-    
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs;
 
     #[test]
     fn test_parse_dx_config() {
-        let content = fs::read_to_string("cargo-runner-dx.toml")
-            .expect("Failed to read cargo-runner-dx.toml");
+        let dx_content = r#"
+        [[run]]
+        name = "dx"
+        command_type = "shell"
+        command = "dx"
+        sub_command = "serve"
+        allowed_subcommands = ["build", "serve"]
+        [run.env]
+        "#;
 
-        let config: Config =
-            toml::from_str(&content).expect("Failed to parse cargo-runner-dx.toml");
+        let config: Config = toml::from_str(dx_content).expect("Failed to parse dx config");
 
-        // Verify the run config exists and contains the dx command
-        let run_configs = config.run.expect("Run config should exist");
+        let run_configs = config.0.get("run")
+            .expect("Run config should exist")
+            .as_ref()
+            .expect("Run config should have values");
+            
         assert_eq!(run_configs.len(), 1);
 
         let dx_config = &run_configs[0];
@@ -164,38 +150,36 @@ mod tests {
         assert_eq!(dx_config.sub_command, Some("serve".to_string()));
         assert!(matches!(dx_config.command_type, Some(CommandType::Shell)));
 
-        // Verify other configs are None
-        assert!(config.test.is_none());
-        assert!(config.build.is_none());
-        assert!(config.bench.is_none());
+        assert!(config.0.get("test").is_none());
+        assert!(config.0.get("build").is_none());
+        assert!(config.0.get("bench").is_none());
     }
 
     #[test]
     fn test_merge_configs() {
-        // Create a base config with defaults
         let mut base_config = Config::default();
 
-        // Create a dx config
         let dx_content = r#"
-    [[run]]
-    name = "dx"
-    command_type = "shell"
-    command = "dx"
-    sub_command = "serve"
-    allowed_subcommands = ["build", "serve"]
-    [run.env]
-    "#;
+        [[run]]
+        name = "dx"
+        command_type = "shell"
+        command = "dx"
+        sub_command = "serve"
+        allowed_subcommands = ["build", "serve"]
+        [run.env]
+        "#;
 
         let dx_config: Config = toml::from_str(dx_content).expect("Failed to parse dx config");
 
-        // Merge configs
         base_config.merge(dx_config);
 
-        // Verify merged results
-        let run_configs = base_config.run.expect("Run config should exist");
-        assert_eq!(run_configs.len(), 2); // Should have both default and dx
+        let run_configs = base_config.0.get("run")
+            .expect("Run config should exist")
+            .as_ref()
+            .expect("Run config should have values");
+            
+        assert_eq!(run_configs.len(), 2);
 
-        // Find and verify dx config
         let dx_config = run_configs
             .iter()
             .find(|c| c.name == "dx")
@@ -205,7 +189,6 @@ mod tests {
         assert_eq!(dx_config.sub_command, Some("serve".to_string()));
         assert!(matches!(dx_config.command_type, Some(CommandType::Shell)));
 
-        // Verify default config still exists
         let default_config = run_configs
             .iter()
             .find(|c| c.name == "default")
