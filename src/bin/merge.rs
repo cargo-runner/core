@@ -4,22 +4,18 @@ use toml;
 
 fn main() {
     
-    let mut default_config = Config::init().unwrap_or_default();
-    
+    let mut default_config = Config::init();
+
+    // println!("loading default config");
+    // println!("{:#?}", default_config);
+
     // Load the second config file
-    let config_path = PathBuf::from("cargo-runner-dx1.toml");
-    let config = if let Ok(content) = fs::read_to_string(&config_path) {
-        toml::from_str(&content).unwrap_or_default()
-    } else {
-        Config::default()
-    };
+    let config = Config::load(PathBuf::from("./cargo-runner-leptos.toml"));
 
     println!("loading data from cargo-runner-dx1.toml");
     println!("{:#?}", config);
  
-    println!("loading default config");
-    println!("{:#?}", default_config);
-
+    
     default_config.merge(config);
 
     println!("final merged config");
