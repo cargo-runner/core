@@ -1,4 +1,4 @@
-use cargo_runner::models::Config;
+use core::models::Config;
 use std::{fs, path::PathBuf};
 use toml;
 
@@ -12,7 +12,7 @@ fn main() {
     // Load the second config file
     let config = Config::load(PathBuf::from("./cargo-runner-leptos.toml"));
 
-    println!("loading data from cargo-runner-dx1.toml");
+    println!("loading data from cargo-runner-leptos.toml");
     println!("{:#?}", config);
  
     
@@ -24,10 +24,9 @@ fn main() {
     let toml_string = toml::to_string_pretty(&default_config)
         .expect("Failed to serialize config to TOML");
 
-    // Write to output.toml
-    fs::write("output.toml", toml_string)
-        .expect("Failed to write to output.toml");
+    fs::write("cargo-runner.toml", toml_string)
+        .expect("Failed to write to cargo-runner.toml");
 
-    println!("Config has been written to output.toml");
+    println!("Config has been written to cargo-runner.toml");
 
 }

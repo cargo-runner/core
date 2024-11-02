@@ -1,0 +1,11 @@
+[run]
+default = "leptos"
+
+[[run.commands]]
+name = "leptos"
+command_type = "sub_command"
+command = "cargo"
+sub_command = "leptos"
+allowed_subcommands = []
+
+[run.commands.env]

@@ -1,0 +1,33 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "build",
+			"path": "crates/cargo-runner",
+			"group": "build",
+			"problemMatcher": {
+				"base": "$tsc",
+				"fileLocation": [
+					"relative",
+					"${workspaceFolder}/crates/cargo-runner/"
+				]
+			},
+			"label": "Debug Extension",
+		},
+		{
+			"type": "npm",
+			"script": "release",
+			"path": "crates/cargo-runner",
+			"group": "build",
+			"problemMatcher": {
+				"base": "$tsc",
+				"fileLocation": [
+					"relative",
+					"${workspaceFolder}/crates/cargo-runner/"
+				]
+			},
+			"label": "Release Build",
+		}
+	]
+}
