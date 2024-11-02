@@ -1,16 +1,4 @@
 {
-    // "rust-analyzer.runnables.extraEnv": {
-    //     "_CARGO_RUNNER_DEBUG": "${workspaceFolder}/crates/cargo-runner/target/wasm32-unknown-unknown/debug/cargo_runner.wasm"
-    // },
-    // "rust-analyzer.cargo.buildScripts.overrideCommand": [
-    //     "cargo",
-    //     "build",
-    //     "--target=wasm32-unknown-unknown",
-    //     "--release"
-    // ],
-    // "rust-analyzer.cargo.extraEnv": {
-    //     "RUSTFLAGS": "-C link-arg=--export=__wit_bindgen_component_type"
-    // },
     "rust-analyzer.lens.references.adt.enable": true,
     "rust-analyzer.lens.references.enumVariant.enable": true,
     "rust-analyzer.lens.references.method.enable": true,
