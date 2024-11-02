@@ -4,25 +4,23 @@ use toml;
 
 fn main() {
     
-    Config::init();
+    let default_config = Config::init().unwrap_or_default();
     // Load the second config file
     let config = Config::load(PathBuf::from("cargo-runner-dx1.toml"));
 
     println!("loading data from cargo-runner-dx1.toml");
     println!("{:#?}", config);
  
-
-
-    // Create a mutable base config and merge the others into it
-    let mut final_config = Config::default_config();
-
     println!("loading default config");
-    println!("{:#?}", final_config);
-    final_config.merge(config);
-    println!("final merged config");
-    println!("{:#?}", final_config);
+    println!("{:#?}", default_config);
 
-    let toml_string = toml::to_string_pretty(&final_config)
+    let mut default_config = default_config;
+    default_config.merge(config);
+
+    println!("final merged config");
+    println!("{:#?}", default_config);
+
+    let toml_string = toml::to_string_pretty(&default_config)
         .expect("Failed to serialize config to TOML");
 
     // Write to output.toml

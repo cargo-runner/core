@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{CommandConfig, CommandType};
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct Config {
     #[serde(default)]
     pub run: Option<Vec<CommandConfig>>,
@@ -16,27 +16,90 @@ pub struct Config {
     pub bench: Option<Vec<CommandConfig>>,
 }
 
+impl Default for Config {
+    fn default() -> Self {
+        Config {
+            run: Some(vec![CommandConfig {
+                name: "default".to_string(),
+                command_type: Some(CommandType::Cargo),
+                command: Some("cargo".to_string()),
+                sub_command: Some("run".to_string()),
+                allowed_subcommands: Some(vec![]),
+                env: Some(HashMap::new()),
+            }]),
+            test: Some(vec![CommandConfig {
+                name: "default".to_string(),
+                command_type: Some(CommandType::Cargo),
+                command: Some("cargo".to_string()),
+                sub_command: Some("test".to_string()),
+                allowed_subcommands: Some(vec![]),
+                env: Some(HashMap::new()),
+            }]),
+            build: Some(vec![CommandConfig {
+                name: "default".to_string(),
+                command_type: Some(CommandType::Cargo),
+                command: Some("cargo".to_string()),
+                sub_command: Some("build".to_string()),
+                allowed_subcommands: Some(vec![]),
+                env: Some(HashMap::new()),
+            }]),
+            bench: Some(vec![CommandConfig {
+                name: "default".to_string(),
+                command_type: Some(CommandType::Cargo),
+                command: Some("cargo".to_string()),
+                sub_command: Some("bench".to_string()),
+                allowed_subcommands: Some(vec![]),
+                env: Some(HashMap::new()),
+            }]),
+        }
+    }
+}
+
+impl Into<String> for Config {
+    fn into(self) -> String {
+         toml::to_string_pretty(&self)
+        .expect("Failed to serialize config to TOML")
+    }
+}
+
+impl From<String> for Config {
+    fn from(value: String) -> Self {
+        toml::from_str(&value).expect(
+            "Failed to convert String to Config"
+        )
+    }
+}
+
+impl From<&str> for Config {
+    fn from(value: &str) -> Self {
+        toml::from_str(value).expect(
+            "Failed to convert String to Config"
+        )
+    }
+}
+
 impl Config {
-    pub fn init() {
+    pub fn init() -> Option<Config> {
         let home = dirs::home_dir().expect("Could not find home directory");
         let config_dir = home.join(".cargo-runner");
         let config_path = config_dir.join("config.toml");
 
         // Check if config already exists
         if config_path.exists() {
-            return;
+            return Some(Config::load(config_path));
         }
 
         // Create directory if it doesn't exist
         fs::create_dir_all(&config_dir).expect("Failed to create config directory");
 
         // Generate default config and serialize to TOML
-        let default_config = Self::default_config();
         let toml =
-            toml::to_string_pretty(&default_config).expect("Failed to serialize default config");
+            toml::to_string_pretty(&Self::default()).expect("Failed to serialize default config");
 
         // Write to file
         fs::write(&config_path, toml).expect("Failed to write default config file");
+
+        None
     }
 
     pub fn load(path: PathBuf) -> Self {
@@ -75,42 +138,7 @@ impl Config {
         }
     }
 
-    pub fn default_config() -> Self {
-        Config {
-            run: Some(vec![CommandConfig {
-                name: "default".to_string(),
-                command_type: Some(CommandType::Cargo),
-                command: Some("cargo".to_string()),
-                sub_command: Some("run".to_string()),
-                allowed_subcommands: Some(vec![]),
-                env: Some(HashMap::new()),
-            }]),
-            test: Some(vec![CommandConfig {
-                name: "default".to_string(),
-                command_type: Some(CommandType::Cargo),
-                command: Some("cargo".to_string()),
-                sub_command: Some("test".to_string()),
-                allowed_subcommands: Some(vec![]),
-                env: Some(HashMap::new()),
-            }]),
-            build: Some(vec![CommandConfig {
-                name: "default".to_string(),
-                command_type: Some(CommandType::Cargo),
-                command: Some("cargo".to_string()),
-                sub_command: Some("build".to_string()),
-                allowed_subcommands: Some(vec![]),
-                env: Some(HashMap::new()),
-            }]),
-            bench: Some(vec![CommandConfig {
-                name: "default".to_string(),
-                command_type: Some(CommandType::Cargo),
-                command: Some("cargo".to_string()),
-                sub_command: Some("bench".to_string()),
-                allowed_subcommands: Some(vec![]),
-                env: Some(HashMap::new()),
-            }]),
-        }
-    }
+    
 }
 
 #[cfg(test)]
@@ -145,7 +173,7 @@ mod tests {
     #[test]
     fn test_merge_configs() {
         // Create a base config with defaults
-        let mut base_config = Config::default_config();
+        let mut base_config = Config::default();
 
         // Create a dx config
         let dx_content = r#"
