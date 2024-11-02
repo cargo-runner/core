@@ -217,12 +217,13 @@ impl Config {
 
     pub fn merge(&mut self, other: Config) {
         for (command_type, (other_default, other_configs)) in other.0 {
+            let command_type_clone = command_type.clone(); // Clone command_type for later use
             let (base_default, base_configs) = self
                 .0
-                .entry(command_type)
+                .entry(command_type_clone) // Use the cloned value here
                 .or_insert_with(|| (None, Some(Vec::new())));
 
-            // Merge command configurations
+            // Merge command configurations first
             if let Some(other_configs) = other_configs {
                 if let Some(base) = base_configs {
                     for other_config in other_configs {
@@ -238,9 +239,20 @@ impl Config {
                 }
             }
 
-            // If other has a default and we don't, use it
-            if other_default.is_some() && base_default.is_none() {
-                *base_default = other_default;
+            // Now update the default value if the other configuration has one
+            if let Some(ref new_default) = other_default {
+                // Check if the new default exists in the command list
+                if let Some(base) = base_configs {
+                    if base.iter().any(|cmd| cmd.name == *new_default) {
+                        *base_default = Some(new_default.clone()); // Update the default field
+                    } else {
+                        eprintln!(
+                            "Warning: Default command '{}' does not exist in the '{}' commands.",
+                            new_default, command_type
+                        );
+                        // Optionally, you can set it to None or keep the existing default
+                    }
+                }
             }
         }
     }
