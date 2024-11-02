@@ -1,0 +1,11 @@
+target
+dist/
+out/
+.DS_Store
+node_modules/
+*.db
+*.tsbuildinfo
+*.bak
+*.vsix
+.config.toml
+cargo-runner*.toml
