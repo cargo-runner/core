@@ -51,6 +51,7 @@ function createContexts() {
 }
 
 createContexts().then(contexts => {
+	// @ts-ignore
 	if (process.argv[2] === '--watch') {
 		const promises = [];
 		for (const context of contexts) {

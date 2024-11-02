@@ -4,11 +4,30 @@
 		{
 			"type": "npm",
 			"script": "build",
-			"path": "crates/vscode",
+			"path": "crates/cargo-runner",
 			"group": "build",
-			"problemMatcher": [],
-			"label": "npm: build - crates/vscode",
-			"detail": "npm run wit-bindgen && npm run wit && npm run compile && cargo build --target wasm32-unknown-unknown && npm run esbuild"
+			"problemMatcher": {
+				"base": "$tsc",
+				"fileLocation": [
+					"relative",
+					"${workspaceFolder}/crates/cargo-runner/"
+				]
+			},
+			"label": "Debug Extension",
+		},
+		{
+			"type": "npm",
+			"script": "release",
+			"path": "crates/cargo-runner",
+			"group": "build",
+			"problemMatcher": {
+				"base": "$tsc",
+				"fileLocation": [
+					"relative",
+					"${workspaceFolder}/crates/cargo-runner/"
+				]
+			},
+			"label": "Release Build",
 		}
 	]
 }

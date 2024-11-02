@@ -2,18 +2,38 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
+			"name": "Debug Extension",
+			"preLaunchTask": "Debug Extension",
 			"type": "extensionHost",
 			"request": "launch",
-			"name": "Run Cargo Runner Extension",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceRoot}/crates/vscode",
+				"--extensionDevelopmentPath=${workspaceRoot}/crates/cargo-runner",
 			],
 			"outFiles": [
-				"${workspaceRoot}/crates/vscode/out/**/*.js"
+				"${workspaceRoot}/crates/cargo-runner/out/**/*.js"
 			],
 			"sourceMaps": true,
-			"preLaunchTask": "npm: build - crates/vscode"
-		}
+			"env": {
+				"_CARGO_RUNNER_DEBUG": "${workspaceFolder}/crates/cargo-runner/target/wasm32-unknown-unknown/debug/cargo_runner.wasm"
+			}
+		},
+		{
+			"name": "Release Build",
+			"preLaunchTask": "Release Build",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceRoot}/crates/cargo-runner",
+			],
+			"outFiles": [
+				"${workspaceRoot}/crates/cargo-runner/out/**/*.js"
+			],
+			"sourceMaps": true,
+			"env": {
+				"_CARGO_RUNNER_DEBUG": "${workspaceFolder}/crates/cargo-runner/target/wasm32-unknown-unknown/release/cargo_runner.wasm"
+			}
+		},
 	]
 }

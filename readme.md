@@ -9,6 +9,39 @@
 - Config::merge(default,other) allows merging two config and override the previous one.
 - Invalid `default` name on any context would fallback to default
 
+## Take into Consideration
+- Rust analyzer has some built in way to override commands
+
+For `build` ,`check`  and `fmt`
+
+e.g.
+
+```json
+ "rust-analyzer.cargo.target": "aarch64-linux-android",
+  "rust-analyzer.cargo.buildScripts.overrideCommand": [
+    "cargo",
+    "ndk",
+    "--target=aarch64-linux-android",
+    "--platform=31",
+    "check",
+    "--quiet",
+    "--workspace",
+    "--message-format=json",
+    "--all-features"
+  ],
+  "rust-analyzer.files.excludeDirs": [
+    "opacity-ios",
+    "react-native-opacity",
+    "opacity-android",
+    "android",
+    "scripts",
+    "generated"
+  ],
+  "rust-analyzer.diagnostics.disabled": ["unresolved-proc-macro"],
+  "rust-analyzer.files.watcher": "server",
+  "rust-analyzer.cargo.features": "all",
+```
+
 
 ## TODO:
 
