@@ -27,8 +27,9 @@ A Vscode plugin for 10X Rust Developer Tool to Run, Build, or Test without Menta
 - Multiple config per crate , works on rust workspaces
 
 ### 3. Cargo Builder
-
-- Auto appends or prepends `sub_command, parameters or options` for **command_type** of `cargo` or `sub_command` when executing a command.
+- Uses your default `config` or `cargo-runner.toml` file to generate commands for all `command_type` variants
+- Auto appends or prepends `sub_command, parameters or options` for **command_type** variants of  `cargo` or `sub_command` when executing a command.
+- Reads your `Cargo.toml` file get other metadata like `package` name or `bin` name or `features` when generating commands.
 
 ### 4. Cargo Runner
 
