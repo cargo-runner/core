@@ -16,7 +16,7 @@ A Vscode plugin for 10X Rust Developer Tool to Run, Build, or Test without Menta
 
 #### a. Config Builder CLI
 
-> Note: This can be instaled optionally with `cargo install cargo-runner-cli` or `cargo install --git https://github.com/cargo-runner/cli` 
+> Note: This can be instaled optionally with `cargo install cargo-runner-cli` or `cargo install --git https://github.com/cargo-runner/cli`  it would allow you to run `rx` or use it as cargo subcommand like `cargo runner`
 
 VSCode plugin will have this functionality using `Commmand Palette`
 
@@ -24,7 +24,7 @@ VSCode plugin will have this functionality using `Commmand Palette`
 <summary>Generate Default config on <em>~/.cargo-runner/config.toml</em></summary>
 
 ```sh
-cf init
+rx init
 ```
 
 </details>
@@ -33,9 +33,9 @@ cf init
 <summary> Download pre-built config made by others </summary>
 
 ```sh
-cr download https://github.com/cargo-runner/configs/raw/main/leptos/leptos.toml
+rx download https://github.com/cargo-runner/configs/raw/main/leptos/leptos.toml
 # you can also download a config and set it as default config for specific context
-cr download https://github.com/cargo-runner/configs/raw/main/leptos/leptos.toml --default run
+rx download https://github.com/cargo-runner/configs/raw/main/leptos/leptos.toml --default run
 ```
 
 </details>
@@ -45,16 +45,16 @@ cr download https://github.com/cargo-runner/configs/raw/main/leptos/leptos.toml 
 
 ```sh
 # pass an optional name 
-cr generate
+rx generate
 # if you pass the name it would generate a config for the given name if it exists
-cr generate leptos
+rx generate leptos
 # by default it would be generated on current working directory
 # if we want to generate on a different dir we can pass --dir
-cr generate --dir ~/.cargo-runner/configs/leptos leptos
+rx generate --dir ~/.cargo-runner/configs/leptos leptos
 # to download a config and generate it on current working directory
-cr generate --url https://github.com/cargo-runner/configs/raw/main/leptos/leptos.toml
+rx generate --url https://github.com/cargo-runner/configs/raw/main/leptos/leptos.toml
 # if you want to download and set different dir name you can also pass --dir
-cr generate --url https://github.com/cargo-runner/configs/raw/main/leptos/leptos.toml --dir ~/.cargo-runner/configs/leptos
+rx generate --url https://github.com/cargo-runner/configs/raw/main/leptos/leptos.toml --dir ~/.cargo-runner/configs/leptos
 ```
 
 [example-override.toml](./cargo-runner-leptos.toml) generated 
@@ -81,11 +81,11 @@ allowed_subcommands = []
 
 ```sh
 # if you dont pass in a path it would assume it is on current working directory
-cr validate
+rx validate
 # you can pass a config file path
-cr validate ~/.cargo-runner/configs/leptos/leptos.toml
+rx validate ~/.cargo-runner/configs/leptos/leptos.toml
 # if you need to validate default config you can pass --default
-cr validate --default
+rx validate --default
 ```
 
 Invalid config would move the file to e.g. `$name.0.bak` and a valid config would be generated for you to modify.
@@ -98,11 +98,11 @@ Invalid config would move the file to e.g. `$name.0.bak` and a valid config woul
 
 ```sh
 # the name params is optional
-cr default run
+rx default run
 # if the name if provided it would check if the context exists
 # before setting it as default , if it doesnt exist nothing would happen
 # and an error would be shown
-cr default run leptos
+rx default run leptos
 ```
 
 </details>
@@ -112,9 +112,9 @@ cr default run leptos
 <summary>Override Parameters for a specific context</summary>
 
 ```sh
-cr params $context --path $path
+rx params $context --path $path
 # example
-cr params run --path /Users/uriah/oss/rx/crates/cli/src/main.rs
+rx params run --path /Users/uriah/oss/rx/crates/cli/src/main.rs
 ```
 
 Note: The file path here would be used to determine where to look for the `cargo-runner.toml` file, and update the `default` context with the parameters.
@@ -132,7 +132,7 @@ Note: The file path here would be used to determine where to look for the `cargo
 <summary>Generate Commands for a specific context</summary>
 
 ```sh
-cr build $context --path $path --ln $ln --col $col
+rx build $context --path $path --ln $ln --col $col
 ```
 
 Note: This would read the file , and current position if --ln and --col are provided, it would use that to determine the current context. and would use the nearest `cargo-runner.toml` file near `Cargo.toml` to generate the commands. It would use as well the `Cargo.toml` file to add other metadata like `package` name or `bin` name or `features` when generating commands.
