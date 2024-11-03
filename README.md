@@ -1,6 +1,6 @@
 # Cargo Runner
 
-> cargo runner is an extensible tool to help you quickly run , build, test and bench rust code. It fills the gap that is missing when using **rust-analyzer** override command config, also it is to maintain, and allows you to use on complex rust workspaces.
+> cargo runner is an extensible tool to help you quickly run , build, test and bench rust code. It fills the gap that is missing when using **rust-analyzer** override command config, also it is easy to add , remove, other config from other frameworks, that can be re-used across different projects and cargo workspaces.
 
 
 
