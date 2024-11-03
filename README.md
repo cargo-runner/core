@@ -30,21 +30,21 @@ Download on vscode marketplace [here](https://marketplace.visualstudio.com/items
 
 > For other text editor, you can use the `rx` cli or `cargo runner`  E.g. when using neovim , you bind a custom keymap e.g. <kbd>CMD</kbd> + <kbd>R</kbd> to invoke `cargo runner exec $filepath` 
 
-## Cargo Runner Cli
 
 ### Core Lib
 
-#### Config Module
+#### Cargo Runner Module
 Use it as a library to make use of `Config` to **init** , **load** , **merge** , **generate** , set or get **default** and **validate** configs.
 
 <details>
 <summary>Init Config</summary>
 
 ```rust
-use core::Config;
+use core::CargoRunner;
 
+/// Use when you want to initialize a new config at `~/.cargo-runner/config.toml`
 fn main() {
-    let config = Config::init();
+    let config = CargoRunner::init();
     println!("{:#?}", config);
 }
 ```
@@ -54,12 +54,13 @@ fn main() {
 <summary>Load Config</summary>
 
 ```rust
-use core::Config;
+use core::CargoRunner;
 use std::path::PathBuf;
 
+/// Use when you want to load a specific config from a given path
 fn main() {
-    let path =  PathBuf::from("cargo-runner-leptos.toml");
-    let config = Config::load(path);
+    let path = PathBuf::from("cargo-runner-leptos.toml");
+    let config = CargoRunner::load(path);
     println!("{:#?}", config);
 }
 ```
@@ -70,21 +71,25 @@ fn main() {
 <summary>Merge Config</summary>
 
 ```rust
-use core::{Config, Context};
+use core::{CargoRunner, Context};
 use std::path::PathBuf;
 
+/// Use when you want to merge a specific config and override it with another config
 fn main() {
-    let mut config = Config::default();
+    let mut config = CargoRunner::default();
 
     let path = PathBuf::from("cargo-runner-leptos.toml");
 
-    let leptos_config = Config::load(path);
-    
+    let leptos_config = CargoRunner::load(path);
+
     config.merge(leptos_config);
- 
+
     let default = config.get_default(Context::Run);
 
-    println!("run default command config is set to: {:#?}", default.unwrap_or_default());
+    println!(
+        "run default command config is set to: {:#?}",
+        default.unwrap_or_default()
+    );
 
     println!("{:#?}", config);
 }
@@ -97,26 +102,84 @@ fn main() {
 <summary>Get and Set Default Config</summary>
 
 ```rust
-use core::{Config, Context};
+use core::{CargoRunner, Context};
 use std::path::PathBuf;
 
 fn main() {
+    let path = PathBuf::from("cargo-runner-leptos.toml");
 
-    let path =  PathBuf::from("cargo-runner-leptos.toml");
+    let mut config = CargoRunner::load(path);
 
-    let mut config = Config::load(path);
+    config.merge(CargoRunner::default());
 
-     config.merge(Config::default());
+    let default = config.get_default(Context::Run);
 
-    let default  = config.get_default(Context::Run);
-
-    println!("previous default for run context: {:#?}", default.unwrap_or_default());
+    println!(
+        "previous default for run context: {:#?}",
+        default.unwrap_or_default()
+    );
 
     config.set_default(Context::Run, "leptos").unwrap();
 
-     let default  = config.get_default(Context::Run);
+    let default = config.get_default(Context::Run);
 
-    println!("latest default for run context: {:#?}", default.unwrap_or_default());
+    println!(
+        "latest default for run context: {:#?}",
+        default.unwrap_or_default()
+    );
+}
+```
+
+</details>
+
+<details>
+<summary>Find Config by Context</summary>
+
+```rust
+use core::{CargoRunner, Context};
+use std::path::PathBuf;
+
+/// Use when you want to find a specific config for a given context
+fn main() {
+    let mut config = CargoRunner::default();
+    let path = PathBuf::from("example-leptos.toml");
+    let  leptos = CargoRunner::load(path);
+    {
+        config.merge(leptos);
+    }
+
+    let default = config.find(Context::Run,"leptos");
+
+    println!("{:#?}", default);
+}
+```
+
+</details>
+
+<details>
+<summary>Pluck Config by Name</summary>
+
+```rust
+use core::CargoRunner;
+use std::path::PathBuf;
+
+/// Use when you need to pluck all config with same name 
+/// on different context, does providing you a new [CargRunner] instance
+/// that has that **config_name** available to any context.
+/// e.g. when you want to pluck only the **leptos** config and remove other configs.
+/// prior merging to other configs.
+/// It also set all  default for any context that matches the **config_name**
+fn main() {
+    let mut config = CargoRunner::default();
+    let path = PathBuf::from("example-leptos.toml");
+    let  leptos = CargoRunner::load(path);
+    {
+        config.merge(leptos);
+    }
+
+    let default = config.pluck("leptos");
+
+    println!("{:#?}", default);
 }
 ```
 

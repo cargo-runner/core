@@ -1,12 +1,12 @@
-use core::{Config, Context};
+use core::{CargoRunner, Context};
 use std::path::PathBuf;
 
 fn main() {
     let path = PathBuf::from("cargo-runner-leptos.toml");
 
-    let mut config = Config::load(path);
+    let mut config = CargoRunner::load(path);
 
-    config.merge(Config::default());
+    config.merge(CargoRunner::default());
 
     let default = config.get_default(Context::Run);
 

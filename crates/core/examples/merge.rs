@@ -1,12 +1,13 @@
-use core::{Config, Context};
+use core::{CargoRunner, Context};
 use std::path::PathBuf;
 
+/// Use when you want to merge a specific config and override it with another config
 fn main() {
-    let mut config = Config::default();
+    let mut config = CargoRunner::default();
 
     let path = PathBuf::from("cargo-runner-leptos.toml");
 
-    let leptos_config = Config::load(path);
+    let leptos_config = CargoRunner::load(path);
 
     config.merge(leptos_config);
 

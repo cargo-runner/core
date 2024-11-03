@@ -1,0 +1,27 @@
+[[test.config]]
+name = "leptos"
+command_type = "subcommand"
+command = "leptos"
+sub_command = "test"
+allowed_subcommands = []
+
+[test.config.env]
+
+[[run.config]]
+name = "leptos"
+command_type = "subcommand"
+command = "leptos"
+sub_command = "watch"
+allowed_subcommands = []
+
+[run.config.env]
+
+
+[[build.config]]
+name = "leptos"
+command_type = "subcommand"
+command = "leptos"
+sub_command = "build"
+allowed_subcommands = []
+
+[build.config.env]

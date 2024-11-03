@@ -1,11 +1,11 @@
 [run]
 default = "leptos"
 
-[[run.commands]]
+[[run.config]]
 name = "leptos"
 command_type = "sub_command"
 command = "leptos"
 sub_command = "watch"
-allowed_subcommands = []
+allowed_subconfig = []
 
-[run.commands.env]
+[run.config.env]
