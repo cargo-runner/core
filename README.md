@@ -41,10 +41,11 @@ Use it as a library to make use of `Config` to **init** , **load** , **merge** ,
 <summary>Init Config</summary>
 
 ```rust
-use core::models::Config;
+use core::Config;
 
 fn main() {
-    Config::init();
+    let config = Config::init();
+    println!("{:#?}", config);
 }
 ```
 </details>
@@ -53,11 +54,12 @@ fn main() {
 <summary>Load Config</summary>
 
 ```rust
-use core::models::Config;
+use core::Config;
+use std::path::PathBuf;
 
 fn main() {
-    let config_path  = PathBuf::from("cargo-runner-leptos.toml");
-    let config = Config::load(config_path);
+    let path =  PathBuf::from("cargo-runner-leptos.toml");
+    let config = Config::load(path);
     println!("{:#?}", config);
 }
 ```
@@ -68,54 +70,58 @@ fn main() {
 <summary>Merge Config</summary>
 
 ```rust
-use core::models::Config;
+use core::{Config, Context};
+use std::path::PathBuf;
 
 fn main() {
-    let default = Config::init();
-    let config_path  = PathBuf::from("cargo-runner-leptos.toml");
-    let config = Config::load(config_path);
-    let config = Config::merge( default,config);
+    let mut config = Config::default();
+
+    let path = PathBuf::from("cargo-runner-leptos.toml");
+
+    let leptos_config = Config::load(path);
+    
+    config.merge(leptos_config);
+ 
+    let default = config.get_default(Context::Run);
+
+    println!("run default command config is set to: {:#?}", default.unwrap_or_default());
+
     println!("{:#?}", config);
 }
-
 ```
 
 </details>
 
 
 <details>
-<summary> Get Default Config</summary>
+<summary>Get and Set Default Config</summary>
 
 ```rust
-use core::models::Config;
+use core::{Config, Context};
+use std::path::PathBuf;
 
 fn main() {
-    let config_path  = PathBuf::from("cargo-runner-leptos.toml");
-    let config = Config::load(config_path);
-    let context =  config.get_default(config);
-    println!("{:#?}", context);
+
+    let path =  PathBuf::from("cargo-runner-leptos.toml");
+
+    let mut config = Config::load(path);
+
+     config.merge(Config::default());
+
+    let default  = config.get_default(Context::Run);
+
+    println!("previous default for run context: {:#?}", default.unwrap_or_default());
+
+    config.set_default(Context::Run, "leptos").unwrap();
+
+     let default  = config.get_default(Context::Run);
+
+    println!("latest default for run context: {:#?}", default.unwrap_or_default());
 }
 ```
 
 </details>
 
-<details>
-<summary>Set Default Config</summary>
-
-```rust
-use core::models::Config;
-
-fn main() {
-    let config_path  = PathBuf::from("cargo-runner-leptos.toml");
-    let config = Config::load(config_path);
-    let command_type = CommandType::Cargo;
-    let context =  Config::get_default(config);
-    let config = Config::set_default(config);
-    println!("{:#?}", config);
-}
-```
-
-</details>
 
 <br>
 

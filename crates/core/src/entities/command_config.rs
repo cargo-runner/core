@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize, Serializer};
 
 use super::CommandType;
 
-#[derive(Debug,Serialize,  Deserialize, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq)]
 pub struct CommandConfig {
     pub name: String,
     #[serde(default)]
@@ -12,7 +12,7 @@ pub struct CommandConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub command_type: Option<CommandType>,
     #[serde(default)]
-    #[serde(skip_serializing_if = "Option::is_none")] 
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub command: Option<String>,
     #[serde(default)]
     pub sub_command: Option<String>,
@@ -22,7 +22,10 @@ pub struct CommandConfig {
     pub env: Option<HashMap<String, String>>,
 }
 
-fn serialize_command_type<S>(command_type: &Option<CommandType>, serializer: S) -> Result<S::Ok, S::Error>
+fn serialize_command_type<S>(
+    command_type: &Option<CommandType>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {
@@ -35,7 +38,6 @@ where
         None => serializer.serialize_none(),
     }
 }
-
 
 impl CommandConfig {
     pub fn merge(&mut self, other: &CommandConfig) {

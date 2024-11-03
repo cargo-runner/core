@@ -1,4 +1,4 @@
-use core::models::Config;
+use core::Config;
 use std::path::PathBuf;
 fn main() {
     Config::init();

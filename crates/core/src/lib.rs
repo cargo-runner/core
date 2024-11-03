@@ -1,1 +1,3 @@
-pub mod models;
+mod entities;
+
+pub use entities::*;
