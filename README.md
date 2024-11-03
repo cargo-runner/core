@@ -194,7 +194,7 @@ TODO:
 <summary>Generate Config</summary>
 
 ```rust
-use core::models::Config;
+use core::Config;
 
 fn main() {
     todo!()
@@ -207,7 +207,7 @@ fn main() {
 <summary>Download Config</summary>
 
 ```rust
-use core::models::Config;
+use core::Config;
 
 fn main() {
     todo!()
@@ -221,7 +221,7 @@ fn main() {
 <summary>Validate Config</summary>
 
 ```rust
-use core::models::Config;
+use core::Config;
 
 fn main() {
     todo!()
@@ -240,7 +240,7 @@ Note: This can be use to build commands or used as a library to build commands .
 <summary>Build Command</summary>
 
 ```rust
-use core::models::Config;
+use core::Config;
 
 fn main() {
     todo!()
@@ -260,7 +260,7 @@ Note: This can be used to execute commands or used as a library to execute comma
 <summary>Execute Command</summary>
 
 ```rust
-use core::models::Config;
+use core::Config;
 
 fn main() {
     todo!()
