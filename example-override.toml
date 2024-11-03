@@ -4,8 +4,8 @@ default = "leptos"
 [[run.commands]]
 name = "leptos"
 command_type = "sub_command"
-command = "cargo"
-sub_command = "leptos"
+command = "leptos"
+sub_command = "watch"
 allowed_subcommands = []
 
 [run.commands.env]
