@@ -207,7 +207,7 @@ impl CargoRunner {
     pub fn init() -> CargoRunner {
         let home = dirs::home_dir().expect("Could not find home directory");
         let config_dir = home.join(".cargo-runner");
-        let config_path = config_dir.join("config.toml");
+        let config_path = Self::get_default_config_path();
 
         // Create the config directory if it doesn't exist
         fs::create_dir_all(&config_dir).expect("Failed to create config directory");
@@ -217,9 +217,7 @@ impl CargoRunner {
     }
 
     pub fn reset() {
-        let home = dirs::home_dir().expect("Could not find home directory");
-        let config_dir = home.join(".cargo-runner");
-        let config_path = config_dir.join("config.toml");
+        let config_path = Self::get_default_config_path();
 
         let default_config = Self::default();
 
@@ -230,6 +228,45 @@ impl CargoRunner {
             toml::to_string_pretty(&default_config).expect("Failed to serialize default config"),
         )
         .expect("Failed to write default config file");
+    }
+
+    pub async fn download(
+        url: &str,
+        save_path: Option<PathBuf>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        // Download the content from the URL asynchronously
+        let response = reqwest::get(url).await?;
+        let content = response.text().await?;
+
+        // Parse the fetched content as TOML into CargoRunner
+        let config: CargoRunner = toml::from_str(&content)?;
+
+        if let Some(path) = save_path {
+            // Save the parsed configuration to the specified path
+            fs::create_dir_all(path.parent().unwrap())?;
+            let toml_content = toml::to_string_pretty(&config)?;
+            fs::write(&path, toml_content)?;
+        } else {
+            let mut default_config = Self::default();
+            default_config.merge(config.clone());
+
+            let config_path = Self::get_default_config_path();
+            // Save the parsed configuration to the default path
+            Self::create_backup(&config_path);
+
+            let toml = toml::to_string_pretty(&default_config)
+                .expect("Failed to serialize default config");
+            fs::write(config_path, toml).expect("Failed to write default config file");
+        }
+
+        Ok(())
+    }
+
+    fn get_default_config_path() -> PathBuf {
+        dirs::home_dir()
+            .expect("Could not find home directory")
+            .join(".cargo-runner")
+            .join("config.toml")
     }
 
     pub fn load(path: PathBuf) -> CargoRunner {
