@@ -1,25 +1,46 @@
+[bench]
+default = "default"
+
+[[bench.config]]
+name = "default"
+command_type = "cargo"
+command = "cargo"
+sub_command = "bench"
+allowed_subcommands = []
+
+[bench.config.env]
+
+[test]
+default = "default"
+
 [[test.config]]
-name = "leptos"
-command_type = "subcommand"
-command = "leptos"
+name = "default"
+command_type = "cargo"
+command = "cargo"
 sub_command = "test"
 allowed_subcommands = []
 
 [test.config.env]
 
+[run]
+default = "default"
+
 [[run.config]]
-name = "leptos"
-command_type = "subcommand"
-command = "leptos"
-sub_command = "watch"
+name = "default"
+command_type = "cargo"
+command = "cargo"
+sub_command = "run"
 allowed_subcommands = []
 
 [run.config.env]
 
+[build]
+default = "default"
+
 [[build.config]]
-name = "leptos"
-command_type = "subcommand"
-command = "leptos"
+name = "default"
+command_type = "cargo"
+command = "cargo"
 sub_command = "build"
 allowed_subcommands = []
 

@@ -5,6 +5,7 @@ use std::path::PathBuf;
 /// If No save_path is provided it would save the config to the default config path
 /// And would merge the downloaded config with the default config
 /// If a save_path is provided it would save the config to the specified path
+/// If the save_path already exists it would merge the downloaded config with the existing config
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let url = "https://gist.githubusercontent.com/codeitlikemiley/26205a6d642c33dbdcf9fc85b79f29bf/raw/a59d51136aca2fed51ca45de6b2319039e977637/leptos.toml";

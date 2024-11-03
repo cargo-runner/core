@@ -239,9 +239,17 @@ impl CargoRunner {
         let content = response.text().await?;
 
         // Parse the fetched content as TOML into CargoRunner
-        let config: CargoRunner = toml::from_str(&content)?;
+        let mut config: CargoRunner = toml::from_str(&content)?;
 
         if let Some(path) = save_path {
+            if path.exists() {
+                // If the file already exists, load and merge it
+                let existing_content = fs::read_to_string(&path)?;
+                let mut existing_config: CargoRunner = toml::from_str(&existing_content)?;
+                
+                existing_config.merge(config.clone());
+                config = existing_config;
+            }
             // Save the parsed configuration to the specified path
             fs::create_dir_all(path.parent().unwrap())?;
             let toml_content = toml::to_string_pretty(&config)?;
