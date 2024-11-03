@@ -185,6 +185,19 @@ fn main() {
 
 </details>
 
+<details>
+<summary>Reset Config</summary>
+
+```rust
+use core::CargoRunner;
+
+fn main() {
+    CargoRunner::reset();
+}
+```
+
+</details>
+
 
 <br>
 

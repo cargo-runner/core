@@ -2,7 +2,7 @@ use std::{collections::HashMap, fs, path::PathBuf};
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use super::{Config, CommandType, Context};
+use super::{CommandType, Config, Context};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CargoRunner(pub HashMap<String, (Option<String>, Option<Vec<Config>>)>);
@@ -198,9 +198,9 @@ impl CargoRunner {
 
     pub fn find(&self, context: Context, config_name: &str) -> Option<&Config> {
         self.0.get(context.into()).and_then(|(_, configs)| {
-            configs.as_ref().and_then(|configs_vec| {
-                configs_vec.iter().find(|c| c.name == config_name)
-            })
+            configs
+                .as_ref()
+                .and_then(|configs_vec| configs_vec.iter().find(|c| c.name == config_name))
         })
     }
 
@@ -214,6 +214,22 @@ impl CargoRunner {
 
         // Attempt to load the config
         CargoRunner::load(config_path)
+    }
+
+    pub fn reset() {
+        let home = dirs::home_dir().expect("Could not find home directory");
+        let config_dir = home.join(".cargo-runner");
+        let config_path = config_dir.join("config.toml");
+
+        let default_config = Self::default();
+
+        Self::create_backup(&config_path);
+
+        fs::write(
+            &config_path,
+            toml::to_string_pretty(&default_config).expect("Failed to serialize default config"),
+        )
+        .expect("Failed to write default config file");
     }
 
     pub fn load(path: PathBuf) -> CargoRunner {
