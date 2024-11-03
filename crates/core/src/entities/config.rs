@@ -309,7 +309,7 @@ mod tests {
         let config = Config::default();
 
         // Test run command default
-        // assert_eq!(config.get_default("run"), Some("default"));
+        assert_eq!(config.get_default("run".into()), Some("default"));
 
         // Test setting new default
         let mut config = Config::default();
@@ -330,7 +330,7 @@ mod tests {
             });
 
         assert!(config.set_default(Context::Run, "dx").is_ok());
-        // assert_eq!(config.get_default("run"), Some("dx"));
+        assert_eq!(config.get_default("run".into()), Some("dx"));
     }
 
     #[test]
@@ -338,16 +338,12 @@ mod tests {
         let dx_content = r#"
         [run]
         default = "dx"
-        commands = [
-            {
-                name = "dx",
-                command_type = "shell",
-                command = "dx",
-                sub_command = "serve",
-                allowed_subcommands = ["build", "serve"],
-                env = {}
-            }
-        ]
+        [[run.commands]]
+        name = "dx"
+        command_type = "shell"
+        command = "dx"
+        sub_command = "serve"
+        allowed_subcommands = ["build", "serve"]
         "#;
 
         let config: Config = toml::from_str(dx_content).expect("Failed to parse dx config");
@@ -376,16 +372,12 @@ mod tests {
         let dx_content = r#"
         [run]
         default = "dx"
-        commands = [
-            {
-                name = "dx",
-                command_type = "shell",
-                command = "dx",
-                sub_command = "serve",
-                allowed_subcommands = ["build", "serve"],
-                env = {}
-            }
-        ]
+        [[run.commands]]
+        name = "dx"
+        command_type = "shell"
+        command = "dx"
+        sub_command = "serve"
+        allowed_subcommands = ["build", "serve"]
         "#;
 
         let dx_config: Config = toml::from_str(dx_content).expect("Failed to parse dx config");
