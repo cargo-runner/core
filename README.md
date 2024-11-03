@@ -230,6 +230,23 @@ fn main() {
 
 </details>
 
+#### Context Finder Module
+
+This module will help what context to use when generating commands or overriding parameters.
+
+This would use `filepath` , `line no` and `column no` to determine the context.
+
+This would make use of `Cargo.toml` file to determine the context , in cases **bin** or **lib** is used and other important metadata like **features** , **workspace** etc.
+
+This would also use some known patterns to determine the context. e.g. special filename like `main.rs` or `lib.rs`, directory name like `src`, `tests`, `benches`, `src/bin/`,
+scope of the module, or function.
+
+special patterns like when using different type of comments 
+like /// or /** **/ or using special macro for doc test etc.
+
+There will be cases that there are multiple possible contexts inside a file , but needs to be narrowed down to one context.
+
+Once we have the **context** it is easy to execute the command.
 
 
 #### Command Builder Module
