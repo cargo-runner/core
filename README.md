@@ -34,7 +34,7 @@ Download on vscode marketplace [here](https://marketplace.visualstudio.com/items
 ### Core Lib
 
 #### Cargo Runner Module
-Use it as a library to make use of `Config` to **init** , **load** , **merge** , **generate** , set or get **default** and **validate** configs.
+Use it as a library to make use of `CargoRunner` to **init** , **load** , **merge** , **generate** , **set_default** or **get_default** and **validate** configs.
 
 <details>
 <summary>Init Config</summary>
@@ -250,11 +250,11 @@ fn main() {
 </details>
 
 
-#### Cargo Runner Module
+#### Executor  Module
 
 Note: This can be used to execute commands or used as a library to execute commands .e.g it is used on `rx exec` command.
 
-> Note: You can use this library to build your own plugin using **Cargo Runner** modules such as **Config** , **CommandBuilder** and **Exec**.
+> Note: You can use this library to build your own plugin using **CargoRunner** modules with **Config** , **CommandBuilder** and **Executor**.
 
 <details>
 <summary>Execute Command</summary>
